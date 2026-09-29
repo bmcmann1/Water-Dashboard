@@ -57,7 +57,7 @@ def nwps(station):
 def discover_hefs():
     # NOAA publishes Swagger UI, but its OpenAPI schema filename may vary. Probe docs first, then spec candidates.
     base='https://api.water.noaa.gov/hefs/v1'
-    specs=[base+'/openapi.json',base+'/swagger.json',base+'/v3/api-docs',base+'/api-docs',base+'/openapi.yaml']
+    specs=[base+'/schema/',base+'/openapi.json',base+'/swagger.json',base+'/v3/api-docs',base+'/api-docs',base+'/openapi.yaml']
     for url in specs:
         parsed,entry=get('HEFS schema discovery',url,'raw/hefs/schema_'+str(specs.index(url))+'.response')
         if isinstance(parsed,dict) and ('paths' in parsed or 'openapi' in parsed or 'swagger' in parsed):return parsed,url
