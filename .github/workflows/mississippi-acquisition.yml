@@ -1,0 +1,25 @@
+name: Mississippi network NOAA and HEFS acquisition
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Acquire NOAA NWPS and discover experimental HEFS
+        run: python3 scripts/acquire.py
+      - name: Publish summary
+        if: always()
+        run: |
+          if [ -f output/SUMMARY.md ]; then cat output/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - name: Archive raw responses and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mississippi-noaa-hefs-${{ github.run_number }}
+          path: output/
+          retention-days: 30
+          if-no-files-found: warn
