@@ -54,67 +54,49 @@ def nwps(station):
         time.sleep(.12)
     return result
 
-def discover_hefs():
-    # NOAA publishes Swagger UI, but its OpenAPI schema filename may vary. Probe docs first, then spec candidates.
+def hefs_acquire(stations):
+    """Use paths verified in the archived NOAA HEFS OpenAPI YAML (2026-09-29)."""
     base='https://api.water.noaa.gov/hefs/v1'
-    specs=[base+'/schema/',base+'/openapi.json',base+'/swagger.json',base+'/v3/api-docs',base+'/api-docs',base+'/openapi.yaml']
-    for url in specs:
-        parsed,entry=get('HEFS schema discovery',url,'raw/hefs/schema_'+str(specs.index(url))+'.response')
-        if isinstance(parsed,dict) and ('paths' in parsed or 'openapi' in parsed or 'swagger' in parsed):return parsed,url
-    for page in [base+'/swagger-ui/',base+'/redoc/']:
-        parsed,entry=get('HEFS documentation page',page,'raw/hefs/'+('swagger-ui.html' if 'swagger' in page else 'redoc.html'))
-        # HTML is archived for diagnosing the actual schema URL; never guess data endpoints.
-    return None,None
-
-def hefs_paths(spec):
-    paths=spec.get('paths',{}); rows=[]
-    for path,methods in paths.items():
-        if not isinstance(methods,dict):continue
-        method=methods.get('get');
-        if not isinstance(method,dict):continue
-        params=(spec.get('parameters',{}) if isinstance(spec.get('parameters'),dict) else {})
-        raw=methods.get('parameters',[])+method.get('parameters',[])
-        details=[]
-        for p in raw:
-            if '$ref' in p:
-                p=params.get(p['$ref'].rsplit('/',1)[-1],{})
-            details.append({'name':p.get('name'),'in':p.get('in'),'required':p.get('required',False),'type':p.get('type') or p.get('schema',{}).get('type'),'description':p.get('description','')[:180]})
-        rows.append({'path':path,'summary':method.get('summary'),'parameters':details})
-    return rows
-
-def hefs_acquire(spec,rows,stations):
-    # Query only schema-confirmed, station-addressable GET paths whose required parameters can be supplied.
-    candidates=[]
-    for r in rows:
-        p=r['path'];params=r['parameters'];names={x['name'].lower() for x in params if x.get('name')}
-        loc=[x for x in params if x.get('name') and any(t in x['name'].lower() for t in ('location','station','identifier','lid'))]
-        if not loc or not any(t in (p+' '+str(r['summary'])).lower() for t in ('quantile','ensemble','forecast','location')):continue
-        if any(x['required'] and x['name'] not in [y['name'] for y in loc] for x in params):continue
-        candidates.append(r)
+    # Keep the authoritative schema alongside the resulting data. YAML is not JSON.
+    _, schema=get('HEFS YAML specification',base+'/schema/','raw/hefs/openapi.yaml')
+    catalog={'schema_url':base+'/schema/','documented_paths':['/hefs/v1/locations/','/hefs/v1/hydrograph-quantiles/','/hefs/v1/headers/','/hefs/v1/ensembles/'],'schema_http_status':schema['http_status'],'schema_bytes':schema['bytes']}
+    save('hefs_endpoint_catalog.json',json.dumps(catalog,indent=2).encode())
     for station in stations:
-        lid=station.get('lid');
+        lid=station.get('lid')
         if not lid:continue
-        station['hefs']={'status':'NO_SCHEMA_COMPATIBLE_PATH' if not candidates else 'attempted','attempts':[]}
-        for r in candidates[:4]:
-            path=r['path'];query={};skip=False
-            for x in r['parameters']:
-                name=x['name'];
-                if not name:continue
-                if any(t in name.lower() for t in ('location','station','identifier','lid')):
-                    if '{'+name+'}' in path:path=path.replace('{'+name+'}',urllib.parse.quote(lid))
-                    else:query[name]=lid
-            if '{' in path:continue
-            # Absolute servers in OAS3 are supported; otherwise NOAA's HEFS base.
-            server=spec.get('servers',[{'url':'https://api.water.noaa.gov/hefs/v1'}])[0]['url'] if spec.get('servers') else 'https://api.water.noaa.gov/hefs/v1'
-            if not server.startswith('https://api.water.noaa.gov'):server='https://api.water.noaa.gov/hefs/v1'
-            url=server.rstrip('/')+'/'+path.lstrip('/')
-            if query:url+='?'+urllib.parse.urlencode(query)
-            safe=re.sub('[^a-zA-Z0-9_-]+','_',r['path']).strip('_')[:75]
-            parsed,entry=get('HEFS '+lid+' '+r['path'],url,'raw/hefs/'+lid+'/'+safe+'.json',timeout=35)
-            station['hefs']['attempts'].append({'path':r['path'],'http_status':entry['http_status'],'json_ok':entry['json_ok'],'bytes':entry['bytes'],'error':entry['error'],'candidate_timestamps':find_dates(parsed) if parsed else []})
+        h={'status':'LOCATION_QUERY_PENDING','attempts':[],'available_parameters':[]}
+        station['hefs']=h
+        url=base+'/locations/?'+urllib.parse.urlencode({'location_id':lid})
+        parsed,e=get('HEFS '+lid+' locations',url,'raw/hefs/'+lid+'/locations.json',timeout=30)
+        h['attempts'].append({'url':url,'http_status':e['http_status'],'json_ok':e['json_ok'],'bytes':e['bytes'],'error':e['error']})
+        # Location responses may be an array or wrapped in a locations/data object.
+        if isinstance(parsed,list): locations=parsed
+        elif isinstance(parsed,dict):
+            locations=parsed.get('locations',parsed.get('data',[]))
+            if isinstance(locations,dict):locations=[locations]
+            if not locations and parsed.get('location_id'):locations=[parsed]
+        else:locations=[]
+        if not isinstance(locations,list):locations=[]
+        parameter_ids=set()
+        for loc in locations:
+            if not isinstance(loc,dict) or str(loc.get('location_id','')).upper()!=lid.upper():continue
+            for p in loc.get('parameters',[]) or []:
+                if isinstance(p,dict):
+                    pid=p.get('parameter_id')
+                    if pid:parameter_ids.add(str(pid))
+                elif isinstance(p,str):parameter_ids.add(p)
+        h['available_parameters']=sorted(parameter_ids)
+        if not e['json_ok']:
+            h['status']='HEFS_LOCATION_REQUEST_FAILED';continue
+        if not parameter_ids:
+            h['status']='NO_CACHED_HEFS_PARAMETERS_FOR_GAUGE';continue
+        for pid in sorted(parameter_ids):
+            url=base+'/hydrograph-quantiles/?'+urllib.parse.urlencode({'location_id':lid,'parameter_id':pid})
+            parsed,q=get('HEFS '+lid+' hydrograph quantiles '+pid,url,'raw/hefs/'+lid+'/quantiles_'+re.sub('[^a-zA-Z0-9_-]','_',pid)+'.json',timeout=40)
+            h['attempts'].append({'url':url,'parameter_id':pid,'http_status':q['http_status'],'json_ok':q['json_ok'],'bytes':q['bytes'],'error':q['error'],'candidate_timestamps':find_dates(parsed) if parsed is not None else []})
             time.sleep(.2)
-        if any(x['json_ok'] for x in station['hefs']['attempts']):station['hefs']['status']='HEFS_JSON_RETRIEVED_SCHEMA_QC_PENDING'
-        elif station['hefs']['attempts']:station['hefs']['status']='HEFS_NO_SUCCESSFUL_RESPONSE'
+        h['status']='HEFS_QUANTILE_JSON_RETRIEVED_QC_PENDING' if any(x.get('parameter_id') and x['json_ok'] for x in h['attempts']) else 'HEFS_QUANTILE_RETRIEVAL_FAILED'
+    return catalog
 
 def main():
     nodes=[dict(x) for x in REG['reaches']+REG['junctions']]
@@ -124,16 +106,12 @@ def main():
     results=[]
     for n in nodes:
         print('NWPS',n['name'],n.get('lid'),flush=True);results.append(nwps(n))
-    spec,spec_url=discover_hefs();rows=hefs_paths(spec) if spec else []
-    save('hefs_endpoint_catalog.json',json.dumps({'schema_url':spec_url,'paths':rows},indent=2).encode())
-    if spec:hefs_acquire(spec,rows,results)
-    else:
-        for r in results:
-            if r.get('lid'):r['hefs']={'status':'HEFS_SCHEMA_NOT_DISCOVERED','note':'Documentation HTML archived; manually inspect its configured OpenAPI URL.'}
+    catalog=hefs_acquire(results)
+    spec_url=catalog['schema_url'] if catalog['schema_http_status']==200 else None
     audit={'started_utc':LOG[0]['retrieved_utc'] if LOG else UTC(),'completed_utc':UTC(),'network_nodes':len(results),'nwps_lids':sum(bool(r.get('lid')) for r in results),'hefs_schema_url':spec_url,'stations':results,'requests':LOG,'certification':'RAW_ACQUISITION_ONLY_NOT_HYDRAULIC_QC'}
     save('audit.json',json.dumps(audit,indent=2).encode())
     success=sum(x['json_ok'] for x in LOG if x['label'].startswith('NWPS'))
-    hefs_ok=sum(x['json_ok'] for x in LOG if x['label'].startswith('HEFS ') and 'schema' not in x['label'])
-    summary=f'# Mississippi NOAA + HEFS acquisition\n\nRun completed {UTC()}\n\n- Network locations: {len(results)}\n- NOAA IDs in existing registry: {audit["nwps_lids"]}\n- Successful NWPS JSON responses: {success}\n- HEFS OpenAPI schema discovered: {bool(spec)}\n- Successful HEFS location JSON responses: {hefs_ok}\n- Status: **raw acquisition only; hydraulic QC and datum certification pending**\n\nSee audit.json, hefs_endpoint_catalog.json and raw/ in the downloadable artifact.\n'
+    hefs_ok=sum(x['json_ok'] for x in LOG if 'hydrograph quantiles' in x['label'])
+    summary=f'# Mississippi NOAA + HEFS acquisition\n\nRun completed {UTC()}\n\n- Network locations: {len(results)}\n- NOAA IDs in existing registry: {audit["nwps_lids"]}\n- Successful NWPS JSON responses: {success}\n- HEFS YAML specification downloaded: {catalog["schema_http_status"]==200}\n- Successful HEFS quantile JSON responses: {hefs_ok}\n- Status: **raw acquisition only; hydraulic QC and datum certification pending**\n\nSee audit.json, hefs_endpoint_catalog.json and raw/ in the downloadable artifact.\n'
     save('SUMMARY.md',summary.encode());print(summary)
 if __name__=='__main__':main()
