@@ -1,5 +1,4 @@
 {
-  "notes":"Populate only verified topology and gauge-specific discharge mappings. Travel-time lag and reach storage must be documented before enabling a reach. Never combine Cairo Ohio-stage with downstream Mississippi flow.",
-  "reaches":[],
-  "example_disabled":{"name":"EXAMPLE_ONLY","enabled":false,"upstream":{"node":"upstream_node","source":"usgs","site":"00000000"},"downstream":{"node":"downstream_node","source":"usgs","site":"00000001"},"tributaries":[],"diversions":[],"lag_hours":null,"lag_source":null,"storage_change_cfs":null,"uncertainty_pct":null}
+  "notes": "Deprecated: screening uses 24-hour observation age and 24-hour neighbor timestamp gap; no lag or routing model.",
+  "reaches": []
 }
