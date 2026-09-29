@@ -1,0 +1,5 @@
+{
+  "instructions": "Populate ONLY after inspecting output/raw/usace/discovery and confirming exact series ID, office, units, and station location. The example is disabled and is NOT a real ID.",
+  "series": [],
+  "example_disabled": {"node":"natchez","office":"CONFIRM_OFFICE","timeseries_id":"CONFIRM_EXACT_CWMS_ID","variable":"discharge","unit":"cfs","approved":false}
+}
