@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Normalize verifiable readings; preserve provenance and never infer missing flow."""
 import csv,datetime as dt,json,math,pathlib,statistics
-P=pathlib.Path; ROOT=P('output'); ROOT.mkdir(exist_ok=True); REG=json.loads(P('network_registry.json').read_text()); NODES=REG['reaches']+REG['junctions']; NOW=dt.datetime.now(dt.timezone.utc)
+P=pathlib.Path; ROOT=P('output'); ROOT.mkdir(exist_ok=True); REG=json.loads(P('network_registry.json').read_text()); NODES=REG['reaches']+REG['junctions']; NOW=dt.datetime.now(dt.timezone.utc); MAX_OBSERVATION_AGE_HOURS=24; MAX_NEIGHBOR_GAP_HOURS=24
 
 def load(path):
  try:return json.loads(P(path).read_text())
@@ -69,9 +69,34 @@ for n in NODES:
  if node=='natchez':obj['caveats'].append('17.28 ft NGVD29 zero documented; regional NAVD88 estimate is provisional, not a certified conversion.')
  normalized[node]=obj
  for source,station,variable,arr in [('NOAA',lid,'stage_observed',obj['noaa'].get('observed',[])),('NOAA',lid,'stage_forecast',obj['noaa'].get('forecast',[]))]+[( 'USGS',site,code,series) for site,ss in obj['usgs'].items() for code,series in ss.items()]+[('USACE',node,k,v) for k,v in obj['usace'].items()]:
-  last=arr[-1]['time'] if arr else None;age=(NOW-timeparse(last)).total_seconds()/3600 if last else None
-  rows.append({'node':node,'name':n['name'],'source':source,'station':station,'variable':variable,'count':len(arr),'latest_utc':last,'age_hours':round(age,2) if age is not None else None,'fresh_72h':age is not None and -2<=age<=72,'status':'FRESH' if age is not None and -2<=age<=72 else 'STALE' if arr else 'NOT_RETRIEVED'})
- if not any(x['node']==node and x['fresh_72h'] for x in rows):missing.append(node)
+  last=arr[-1]['time'] if arr else None
+  if variable=='stage_forecast':
+   meta=load(ROOT/'raw/nwps'/lid/'stageflow.json') if lid else None
+   # Forecast valid times can lie in the future. Their maximum is a horizon, not an issue timestamp.
+   issue_candidates=[]
+   if isinstance(meta,dict):
+    def scan_issue(v,depth=0):
+     if depth>3:return
+     if isinstance(v,dict):
+      for k,x in v.items():
+       if k.lower() in ('issuetime','issuedtime','issuedat','forecastissuetime','generationtime','generatedat'):
+        t=timeparse(x)
+        if t:issue_candidates.append(t)
+       elif isinstance(x,(dict,list)):scan_issue(x,depth+1)
+     elif isinstance(v,list):
+      for x in v[:3]:scan_issue(x,depth+1)
+    scan_issue(meta)
+   issue=max(issue_candidates).isoformat() if issue_candidates else None
+   age=(NOW-timeparse(issue)).total_seconds()/3600 if issue else None
+   fresh=age is not None and -2<=age<=72
+   status='FORECAST_ISSUE_FRESH' if fresh else 'FORECAST_ISSUE_STALE' if issue else 'FORECAST_ISSUE_UNKNOWN' if arr else 'NOT_RETRIEVED'
+   rows.append({'node':node,'name':n['name'],'source':source,'station':station,'variable':variable,'count':len(arr),'latest_utc':last,'age_hours':round(age,2) if age is not None else None,'fresh_24h':False,'status':status,'forecast_issue_utc':issue,'forecast_valid_end_utc':last})
+  else:
+   # Observation freshness is based on measurement time, NEVER retrieval time.
+   age=(NOW-timeparse(last)).total_seconds()/3600 if last else None
+   fresh=age is not None and -2<=age<=MAX_OBSERVATION_AGE_HOURS
+   rows.append({'node':node,'name':n['name'],'source':source,'station':station,'variable':variable,'count':len(arr),'latest_utc':last,'age_hours':round(age,2) if age is not None else None,'fresh_24h':fresh,'status':'FRESH' if fresh else 'STALE_EXCLUDED_FROM_CURRENT_PROFILE' if arr else 'NOT_RETRIEVED','forecast_issue_utc':None,'forecast_valid_end_utc':None})
+ if not any(x['node']==node and x.get('fresh_24h',False) and x['variable']!='stage_forecast' for x in rows):missing.append(node)
 
 # Timestamp-matched NOAA/USGS native-stage comparison: same zero NOT assumed, differences diagnostic only.
 cross=[]
@@ -85,36 +110,82 @@ for node,obj in normalized.items():
    if nearest and abs((timeparse(nearest['time'])-t).total_seconds())<=1800:pairs.append(a['value']-nearest['value'])
   if pairs:cross.append({'node':node,'usgs_site':sid,'paired_points':len(pairs),'median_native_stage_difference_ft':round(statistics.median(pairs),3),'certified_same_zero':False,'warning':'Diagnostic only; investigate sensor reference and offset before comparing WSE.'})
 
-# Reach mass balance: only explicitly configured, verified, contemporaneous discharge series.
-config=load('config/mass_balance_reaches.json') or {'reaches':[]};balances=[]
-def discharge(spec):
- obj=normalized.get(spec.get('node'),{});src=spec.get('source')
- if src=='usgs':return obj.get('usgs',{}).get(str(spec.get('site')),{}).get('00060',[])
- if src=='usace':return obj.get('usace',{}).get('discharge',[])
- return []
-def nearest(arr,target,minutes=60):
- if not arr:return None
- x=min(arr,key=lambda x:abs((timeparse(x['time'])-target).total_seconds()))
- return x if abs((timeparse(x['time'])-target).total_seconds())<=minutes*60 else None
-for r in config['reaches']:
- if not r.get('enabled'):continue
- if r.get('lag_hours') is None or not r.get('lag_source') or r.get('storage_change_cfs') is None or r.get('uncertainty_pct') is None:
-  balances.append({'reach':r['name'],'status':'BLOCKED_MISSING_LAG_STORAGE_OR_UNCERTAINTY'});continue
- down=discharge(r['downstream']);up=discharge(r['upstream']);samples=[]
- for d in down:
-  td=timeparse(d['time']);tu=td-dt.timedelta(hours=float(r['lag_hours']));u=nearest(up,tu)
-  tributaries=[nearest(discharge(s),tu) for s in r.get('tributaries',[])];diversions=[nearest(discharge(s),tu) for s in r.get('diversions',[])]
-  if not u or any(x is None for x in tributaries+diversions):continue
-  if any(str(x.get('unit','')).lower() not in ('ft3/s','cfs','ft^3/s') for x in [d,u]+tributaries+diversions):continue
-  expected=u['value']+sum(x['value'] for x in tributaries)-sum(x['value'] for x in diversions)-float(r['storage_change_cfs'])
-  residual=d['value']-expected;tol=max(1,abs(expected))*float(r['uncertainty_pct'])/100
-  samples.append({'time_utc':d['time'],'observed_downstream_cfs':d['value'],'expected_cfs':round(expected,2),'residual_cfs':round(residual,2),'within_assumed_uncertainty':abs(residual)<=tol})
- balances.append({'reach':r['name'],'status':'EVALUATED' if samples else 'INSUFFICIENT_TIME_ALIGNED_Q','samples':samples,'assumptions':{'lag_hours':r['lag_hours'],'lag_source':r['lag_source'],'storage_change_cfs':r['storage_change_cfs'],'uncertainty_pct':r['uncertainty_pct']}})
+# Simple contemporary-observation QC: no routing, lag or storage model.
+# A warning is diagnostic, not proof of a hydraulic impossibility.
+DATUM={r['node_id']:r for r in csv.DictReader(P('config/datum_registry.csv').open(newline=''))}
+MAIN=[n['id'] for n in REG['reaches'] if n.get('kind')=='mainstem']
+# Cairo is an Ohio River stage station and cannot be a Mississippi mainstem slope endpoint.
+MAIN=[x for x in MAIN if x!='cairo']
+# Only compare adjacent entries within a continuous mainstem section; never jump across Cairo.
+SEGMENTS=[]
+for segment in (MAIN[:MAIN.index('thebes')+1],MAIN[MAIN.index('newmadrid'):]):
+ SEGMENTS.extend(zip(segment,segment[1:]))
 
-out={'generated_utc':NOW.isoformat(),'nodes':normalized,'coverage':rows,'stage_crosschecks':cross,'mass_balance':balances,'notes':['No NOAA stage-to-discharge conversion inferred.','NOAA primary assumed native stage only; NOAA secondary discharge retained in raw stageflow until field/units validation.','USGS OGC routes retained raw; legacy IV used for normalized values until OGC schema is verified against actual GitHub results.','Empty CWMS approved-series config means no operational series acquired.','No mass balance computed without documented lag, storage and complete time-aligned discharge.']}
+def current(arr):
+ return [v for v in arr if (t:=timeparse(v['time'])) and -2<=(NOW-t).total_seconds()/3600<=MAX_OBSERVATION_AGE_HOURS]
+def pick(node,kind):
+ o=normalized[node]; candidates=[]
+ if kind=='stage':
+  candidates += [('NOAA',o['noaa'].get('observed',[]))]
+  candidates += [('USACE',o['usace'].get('stage',[]))]
+  candidates += [('USGS',v.get('00065',[])) for v in o['usgs'].values()]
+ elif kind=='discharge':
+  candidates += [('USACE',o['usace'].get('discharge',[]))]
+  candidates += [('USGS',v.get('00060',[])) for v in o['usgs'].values()]
+ # prefer freshest contemporary observation, retain provenance
+ opts=[(timeparse(v['time']),src,v) for src,arr in candidates for v in current(arr)]
+ return max(opts,key=lambda x:x[0]) if opts else None
+
+def cfs(value,unit):
+ u=str(unit or '').lower().replace(' ','')
+ if u in ('ft3/s','ft^3/s','cfs','ft³/s'):return value
+ if u in ('m3/s','cms','m³/s'):return value*35.3146667
+ return None
+
+def navd88_zero(node,source):
+ if source!='NOAA':return None # Never apply NOAA zero to USGS/USACE sensor.
+ r=DATUM.get(node,{})
+ for key in ('NOAA_NAVD88_zero_ft','USACE_NAVD88_adjustment_ft'):
+  # USACE adjustment is not interchangeable with NOAA zero; skip it here.
+  if key!='NOAA_NAVD88_zero_ft':continue
+  try:return float(r[key])
+  except (ValueError,KeyError,TypeError):pass
+ return None
+
+plausibility=[]
+for up,dn in SEGMENTS:
+ for kind in ('stage','discharge'):
+  a=pick(up,kind);b=pick(dn,kind)
+  row={'upstream':up,'downstream':dn,'variable':kind,'max_observation_age_hours':24,'max_neighbor_gap_hours':24}
+  if not a or not b:
+   row.update(status='INDETERMINATE_MISSING_OR_STALE',reason='No contemporary observations at both endpoints');plausibility.append(row);continue
+  ta,sa,va=a;tb,sb,vb=b;gap=abs((ta-tb).total_seconds())/3600
+  row.update(upstream_time_utc=ta.isoformat(),downstream_time_utc=tb.isoformat(),timestamp_gap_hours=round(gap,2),upstream_source=sa,downstream_source=sb)
+  if gap>MAX_NEIGHBOR_GAP_HOURS:
+   row.update(status='INDETERMINATE_TIME_MISMATCH',reason='Observation timestamps differ by over 24 hours');plausibility.append(row);continue
+  if kind=='stage':
+   za=navd88_zero(up,sa);zb=navd88_zero(dn,sb)
+   if za is None or zb is None:
+    row.update(status='INDETERMINATE_DATUM',reason='No compatible verified NOAA NAVD88 zeros for both selected series');plausibility.append(row);continue
+   hu=va['value']+za;hd=vb['value']+zb
+   row.update(upstream_wse_ft=round(hu,3),downstream_wse_ft=round(hd,3),difference_ft=round(hu-hd,3))
+   row['status']='REVIEW_DOWNSTREAM_HIGHER' if hd>hu+0.5 else 'PASS'
+   row['reason']='0.5 ft screening tolerance; possible backwater, tidal effect or datum error' if row['status'].startswith('REVIEW') else 'Screening-only WSE ordering'
+  else:
+   qu=cfs(va['value'],va.get('unit'));qd=cfs(vb['value'],vb.get('unit'))
+   if qu is None or qd is None:
+    row.update(status='INDETERMINATE_UNITS',reason='Discharge units not verified');plausibility.append(row);continue
+   row.update(upstream_cfs=round(qu),downstream_cfs=round(qd),ratio_down_up=round(qd/qu,3) if qu>0 else None)
+   # Without complete intervening tributary/diversion flow, avoid a false pass/fail.
+   if qu>0 and (qd<0.7*qu or qd>1.5*qu):row.update(status='REVIEW_FLOW_DISCREPANCY',reason='Large difference; inspect intervening inflows/outlets, station identity and timestamps')
+   else:row.update(status='PASS_SCREEN',reason='No large flow discrepancy; does not establish reach mass balance')
+  plausibility.append(row)
+
+balances=[] # Retained only for compatibility with earlier offline dashboard.
+out={'generated_utc':NOW.isoformat(),'nodes':normalized,'coverage':rows,'stage_crosschecks':cross,'mass_balance':balances,'plausibility_checks':plausibility,'qc_thresholds':{'observation_age_hours':24,'neighbor_timestamp_gap_hours':24},'notes':['No NOAA stage-to-discharge conversion inferred.','NOAA primary assumed native stage only; NOAA secondary discharge retained in raw stageflow until field/units validation.','USGS OGC routes retained raw; legacy IV used for normalized values until OGC schema is verified against actual GitHub results.','CWMS station series acquired from reviewed exact IDs where available; structural operations intentionally excluded pending threshold gating.','Simple contemporary data-screening checks only; no routing model or certified mass balance.']}
 (ROOT/'normalized_network.json').write_text(json.dumps(out,separators=(',',':')))
 with (ROOT/'station_coverage.csv').open('w',newline='') as f:
  w=csv.DictWriter(f,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
-(ROOT/'qc_report.json').write_text(json.dumps({'generated_utc':NOW.isoformat(),'node_count':len(normalized),'expected_node_count':42,'nodes_without_fresh_observation':missing,'stage_crosschecks':cross,'mass_balance':balances,'coverage_counts':{'fresh':sum(r['fresh_72h'] for r in rows),'total':len(rows)},'caveats':out['notes']},indent=2))
-print('Normalized',len(normalized),'nodes; fresh source/variable rows',sum(r['fresh_72h'] for r in rows),'/',len(rows),'nodes without fresh observation',len(missing))
+(ROOT/'qc_report.json').write_text(json.dumps({'generated_utc':NOW.isoformat(),'node_count':len(normalized),'expected_node_count':42,'nodes_without_fresh_observation':missing,'stage_crosschecks':cross,'mass_balance':balances,'plausibility_checks':plausibility,'qc_thresholds':{'observation_age_hours':24,'neighbor_timestamp_gap_hours':24},'coverage_counts':{'fresh_observation_rows':sum(r.get('fresh_24h',False) for r in rows),'total':len(rows)},'caveats':out['notes']},indent=2))
+print('Normalized',len(normalized),'nodes; fresh source/variable rows',sum(r.get('fresh_24h',False) for r in rows),'/',len(rows),'nodes without fresh observation',len(missing))
 if len(normalized)!=42:raise SystemExit('Network coverage registry mismatch')
