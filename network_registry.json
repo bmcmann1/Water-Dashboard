@@ -1,7 +1,7 @@
 {
   "generated": "2026-09-29",
-  "version": "5.13",
-  "mode": "browser-acquired on open; no falsely labeled static current data",
+  "version": "6.0",
+  "mode": "frozen GitHub acquisition; NWM only for verified reach mappings",
   "reaches": [
     {
       "id": "cag",
@@ -360,6 +360,42 @@
       "parent": "bellechasse",
       "lid": "",
       "usgs": null
+    },
+    {
+      "id": "salt",
+      "name": "Salt River",
+      "kind": "in",
+      "parent": "cag",
+      "lid": "",
+      "usgs": null,
+      "upstream_boundary": true
+    },
+    {
+      "id": "cuivre",
+      "name": "Cuivre River",
+      "kind": "in",
+      "parent": "grafton",
+      "lid": "",
+      "usgs": "05514500",
+      "upstream_boundary": false
+    },
+    {
+      "id": "obion",
+      "name": "Obion River",
+      "kind": "in",
+      "parent": "memphis",
+      "lid": "",
+      "usgs": "07026040",
+      "upstream_boundary": false
+    },
+    {
+      "id": "forkeddeer",
+      "name": "Forked Deer River",
+      "kind": "in",
+      "parent": "memphis",
+      "lid": "",
+      "usgs": null,
+      "upstream_boundary": false
     }
   ],
   "sourcePriority": [
