@@ -1,50 +1,61 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mississippi River Hydraulic Network</title><style>
 :root{font-family:system-ui,Arial;color:#183247;background:#f2f6f9}*{box-sizing:border-box}body{margin:0}header{background:#143d52;color:white;padding:18px 26px}header h1{margin:0 0 6px}header small{color:#c6e0eb}main{max-width:1650px;margin:auto;padding:14px}.layout{display:grid;grid-template-columns:minmax(440px,48%) 1fr;gap:14px}.panel{background:white;border:1px solid #d6e2e8;border-radius:12px;padding:15px;min-width:0}.maphead{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}.muted{color:#617581;font-size:.84rem}.key{display:flex;gap:14px;font-size:.8rem;flex-wrap:wrap}.swatch{display:inline-block;width:24px;height:8px;border-radius:8px;margin-right:5px}#map{width:100%;height:min(79vh,1000px);min-height:580px;background:#f5f9fb;border:1px solid #dce7ee;border-radius:9px}.station{cursor:pointer;outline:none}.station circle{stroke:white;stroke-width:1.5}.station:focus circle,.station:hover circle{stroke:#f2a23b;stroke-width:4}#plot{width:100%;height:330px;background:#fbfdfe;border:1px solid #e1eaf0}select{padding:8px;max-width:100%;margin:5px 0 12px}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:8px;border-bottom:1px solid #e5edf1;font-size:.85rem}td{vertical-align:top}.status{font-weight:600}.ok{color:#087d64}.warn{color:#a05c12}.banner{background:#fff2d8;border-left:4px solid #c18b32;padding:9px 12px;margin:10px 0;font-size:.86rem}details{border:1px solid #dfe8ed;border-radius:7px;margin-top:13px;padding:9px}summary{cursor:pointer;font-weight:600}.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:#eaf3f8;padding:4px 8px;border-radius:20px;font-size:.78rem}.metric{background:#edf6f8;padding:10px;border-radius:8px;margin:8px 0}button{cursor:pointer}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.toolbar button{background:white;border:1px solid #cbdde5;border-radius:6px;padding:6px 10px}.toolbar button.active{background:#d7eff1;border-color:#158398}@media(max-width:970px){.layout{grid-template-columns:1fr}#map{height:680px}}
-</style></head><body><header><h1>Mississippi River Hydraulic Network</h1><small id="snapshot"></small></header><main><div class="layout"><section class="panel"><div class="maphead"><div><h2>River network</h2><div class="muted">Georeferenced, generalized channels · select a station</div></div><div class="toolbar"><button id="widthQ" class="active">Measured flow widths</button><button id="widthSame">Uniform widths</button></div></div><div class="key"><span><i class="swatch" style="background:#147e9d"></i>Measured endpoints</span><span><i class="swatch" style="background:#d19a38"></i>Interpolated between gauges</span><span><i class="swatch" style="background:#9fb6c4"></i>Not estimated</span><span>○ Station / tributary</span></div><svg id="map" viewBox="0 0 690 900" role="img" aria-label="Generalized geographically placed Mississippi River and tributary station map"><g id="reaches"></g><g id="stations"></g></svg><div class="muted">Generalized georeferenced positions, not verified GIS centerlines. Widths are smoothly interpolated between fresh discharge measurements and shown in amber wherever the reach is estimated. Blue indicates reaches bounded by measured endpoints. Gray indicates areas without two usable bounding gauges. Interpolation is for map display, not a measured or routed discharge.</div><details><summary>Long-term average versus current flow</summary><div id="averages" class="muted"></div><p class="muted">Only station-specific, sourced historical baselines can appear here. The example infographic is design inspiration, not a source of current or universal flow percentages.</p></details></section><section class="panel"><h2 id="name">Select a station</h2><p id="subtitle" class="muted"></p><div id="discharge" class="metric"></div><label for="series">Hydrograph</label><br><select id="series"></select><svg id="plot" viewBox="0 0 790 330" role="img" aria-label="Station hydrograph"></svg><h3>Tributary flow: measured versus modeled</h3><div id="nwmcomparison" class="metric muted"></div><h3>Coverage and provenance</h3><div id="coverage"></div><details><summary>Technical provenance and point counts</summary><div id="technical"></div></details><details><summary>HEFS availability</summary><div id="hefs" class="chips"></div></details><details><summary>Hydraulic QC details</summary><div id="qc" class="muted"></div></details><details><summary>Datum and station caveats</summary><div id="caveats" class="muted"></div></details></section></div></main><script id="network-data" type="application/json">__PAYLOAD__</script><script>
+</style></head><body><header><h1>Mississippi River Hydraulic Network</h1><small id="snapshot"></small></header><main><div class="layout"><section class="panel"><div class="maphead"><div><h2>River network</h2><div class="muted">Georeferenced, generalized channels · select a station</div></div><div class="toolbar"><button id="widthQ" class="active">Measured flow widths</button><button id="widthSame">Uniform widths</button><button id="zoomIn" type="button">+</button><button id="zoomOut" type="button">−</button><button id="zoomReset" type="button">Reset view</button></div></div><div class="key"><span><i class="swatch" style="background:#147e9d"></i>Observed discharge</span><span><i class="swatch" style="background:#26966d"></i>Complete continuity estimate</span><span><i class="swatch" style="background:#9fb6c4"></i>Not estimated</span><span>○ Station / tributary</span></div><svg id="map" viewBox="0 0 690 900" role="img" aria-label="Generalized geographically placed Mississippi River and tributary station map"><g id="reaches"></g><g id="stations"></g></svg><div class="muted">Generalized georeferenced positions, not verified GIS centerlines. Blue marks observed discharge anchors; green marks complete continuity estimates. Gray marks reaches without a defensible estimate. All tributary widths use the same discharge scale. Zoom with the wheel or buttons, drag to pan; double-click to reset.</div><details><summary>Long-term average versus current flow</summary><div id="averages" class="muted"></div><p class="muted">Only station-specific, sourced historical baselines can appear here. The example infographic is design inspiration, not a source of current or universal flow percentages.</p></details></section><section class="panel"><h2 id="name">Select a station</h2><p id="subtitle" class="muted"></p><div id="discharge" class="metric"></div><label for="series">Hydrograph</label><br><select id="series"></select><svg id="plot" viewBox="0 0 790 330" role="img" aria-label="Station hydrograph"></svg><h3>Tributary flow: measured versus modeled</h3><div id="nwmcomparison" class="metric muted"></div><h3>Coverage and provenance</h3><div id="coverage"></div><details><summary>Technical provenance and point counts</summary><div id="technical"></div></details><details><summary>HEFS availability</summary><div id="hefs" class="chips"></div></details><details><summary>Hydraulic QC details</summary><div id="qc" class="muted"></div></details><details><summary>Datum and station caveats</summary><div id="caveats" class="muted"></div></details></section></div></main><script id="network-data" type="application/json">__PAYLOAD__</script><script>
 'use strict';const D=JSON.parse(document.getElementById('network-data').textContent),NS='http://www.w3.org/2000/svg',nodes=D.nodes,positions=D.geography.positions;document.getElementById('snapshot').textContent='Frozen snapshot '+new Date(D.generated_utc).toLocaleString('en-US',{timeZone:'America/Chicago',dateStyle:'medium',timeStyle:'short'})+' Central · '+Object.keys(nodes).length+' nodes · No live refresh';
 const $=id=>document.getElementById(id),fmt=v=>Number(v).toLocaleString('en-US',{maximumFractionDigits:1}),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const svg=(tag,attrs={},parent)=>{let e=document.createElementNS(NS,tag);for(let [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(parent)parent.append(e);return e};
 // Geographic projection in longitude and latitude, fitted to the actual station reference points.
 const project=([lon,lat])=>[42+(lon+92)*102,38+(39.45-lat)*82];let selected='',flowWidths=true;
-function renderMap(){let reaches=$('reaches'),stations=$('stations');reaches.replaceChildren();stations.replaceChildren();
- const main=D.order.filter(id=>positions[id]);
- // Interpolate only between two valid observed mainstem discharge anchors.
- // Distances are cumulative geographic screen distance, not station count.
- const anchorIndices=main.map((id,i)=>nodes[id].current_discharge?i:-1).filter(i=>i>=0);
- const xy=main.map(id=>project(positions[id]));
- const cum=[0];for(let i=1;i<xy.length;i++)cum.push(cum[i-1]+Math.hypot(xy[i][0]-xy[i-1][0],xy[i][1]-xy[i-1][1]));
- const inferred=Array(main.length).fill(null);
- for(let j=0;j<anchorIndices.length-1;j++){
-   let lo=anchorIndices[j],hi=anchorIndices[j+1],qa=nodes[main[lo]].current_discharge.cfs,qb=nodes[main[hi]].current_discharge.cfs;
-   let distance=cum[hi]-cum[lo];if(distance<=0)continue;
-   for(let k=lo;k<=hi;k++)inferred[k]=qa+(qb-qa)*(cum[k]-cum[lo])/distance;
- }
- const width=q=>flowWidths?Math.max(2.5,Math.min(24,Math.sqrt(Math.max(0,q)/1000)*.72)):5;
+function renderMap(){const reaches=$('reaches'),stations=$('stations');reaches.replaceChildren();stations.replaceChildren();
+ const main=D.order.filter(id=>positions[id]);const width=q=>flowWidths?Math.max(2.5,Math.min(24,Math.sqrt(Math.max(0,q)/1000)*.72)):5;
+ const layer=svg('g',{},reaches),labels=svg('g',{},stations);
  for(let i=0;i<main.length-1;i++){
-   let a=main[i],b=main[i+1],p=xy[i],q=xy[i+1];
-   let qa=inferred[i],qb=inferred[i+1],hasRange=qa!==null&&qb!==null;
-   // A reach between two independently measured endpoints is blue; all other
-   // reaches between known bounding gauges are amber (display interpolation).
-   let bothObserved=!!nodes[a].current_discharge&&!!nodes[b].current_discharge;
-   let color=hasRange?(bothObserved?'#147e9d':'#d19a38'):'#9fb6c4';
-   let mid=[(p[0]+q[0])/2+((i%2)?-13:13),(p[1]+q[1])/2];
-   let point=t=>{let u=1-t;return [u*u*p[0]+2*u*t*mid[0]+t*t*q[0],u*u*p[1]+2*u*t*mid[1]+t*t*q[1]]};
-   // Short adjoining strokes produce a gradual width change rather than a
-   // conspicuous jump at station nodes; no additional network data required.
-   const pieces=hasRange&&flowWidths?8:1;
-   for(let k=0;k<pieces;k++){
-     let t0=k/pieces,t1=(k+1)/pieces,m=(t0+t1)/2,A=point(t0),B=point(t1),Q=hasRange?qa+(qb-qa)*m:null;
-     svg('path',{d:`M${A[0]},${A[1]} L${B[0]},${B[1]}`,fill:'none',stroke:color,
-       'stroke-width':Q===null?(flowWidths?2.5:5):width(Q),'stroke-linecap':'round',opacity:'.92'},reaches);
-   }
-   let label=hasRange?(bothObserved?'Measured at both endpoints; intermediate width interpolated':'Estimated between measured upstream/downstream gauges'):'Insufficient bounding discharge measurements';
-   let tip=svg('title',{},reaches);tip.textContent=nodes[a].name+' → '+nodes[b].name+': '+label+(hasRange?' ('+fmt(qa)+' to '+fmt(qb)+' cfs)':'');
+   let a=main[i],b=main[i+1],p=project(positions[a]),q=project(positions[b]),f=nodes[a].reach_flow||{},value=f.cfs;
+   let color=f.status==='observed'?'#147e9d':f.status==='continuity'?'#26966d':'#9fb6c4';
+   let mid=[(p[0]+q[0])/2+(i%2?-13:13),(p[1]+q[1])/2];
+   let path=svg('path',{d:`M${p[0]},${p[1]} Q${mid[0]},${mid[1]} ${q[0]},${q[1]}`,fill:'none',stroke:color,'stroke-width':value===null||value===undefined?2.5:width(value),'stroke-linecap':'round',opacity:'.92',cursor:'pointer'},layer);
+   svg('title',{},path).textContent=nodes[a].name+' → '+nodes[b].name+': '+(value===null||value===undefined?'Unbounded (missing lateral flow or upstream anchor)':fmt(value)+' cfs ('+f.status+')');
+   path.addEventListener('click',()=>{if(!dragged)show(a)});
  }
- for(let [id,parent] of Object.entries(D.parents)){if(!positions[id]||!positions[parent])continue;let p=project(positions[id]),q=project(positions[parent]),Q=nodes[id].current_discharge;let w=Q&&flowWidths?Math.max(2.5,Math.min(17,Math.sqrt(Q.cfs/1000)*.72)):flowWidths?2:4;let path=svg('path',{d:`M${p[0]},${p[1]} Q${(p[0]+q[0])/2},${(p[1]+q[1])/2-10} ${q[0]},${q[1]}`,fill:'none',stroke:Q?'#3a96b0':'#b3c6ce','stroke-width':w,'stroke-linecap':'round'},reaches);svg('title',{},path).textContent=nodes[id].name+': '+(Q?fmt(Q.cfs)+' cfs':'discharge unavailable');}
- for(let [id,p] of Object.entries(positions)){if(!nodes[id])continue;let [x,y]=project(p),n=nodes[id],g=svg('g',{class:'station',tabindex:'0',role:'button','aria-label':'Select '+n.name},stations);svg('circle',{cx:x,cy:y,r:id===selected?7:4,fill:id===selected?'#f0a63d':n.kind==='mainstem'?'#155d7a':n.kind==='inflow'?'#3a9674':'#b27945'},g);svg('title',{},g).textContent=n.name;g.addEventListener('click',()=>show(id));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();show(id)}});}
- // Label major anchor stations without crowding; remaining station names appear on hover/click.
- for(let id of ['cag','stlouis','cairo','memphis','vicksburg','natchez','baton','neworleans','westpointe']){let p=positions[id];if(!p)continue;let [x,y]=project(p);let t=svg('text',{x:x+8,y:y-7,'font-size':12,fill:'#203f51','paint-order':'stroke',stroke:'#f5f9fb','stroke-width':3},stations);t.textContent=nodes[id].name;}
+ for(let [id,parent] of Object.entries(D.parents)){
+   if(!positions[id]||!positions[parent])continue;
+   let p=project(positions[id]),q=project(positions[parent]),n=nodes[id],obs=n.current_discharge;
+   let w=obs?width(obs.cfs):2.5;
+   let path=svg('path',{d:`M${p[0]},${p[1]} Q${(p[0]+q[0])/2},${(p[1]+q[1])/2-10} ${q[0]},${q[1]}`,fill:'none',stroke:obs?'#147e9d':'#9fb6c4','stroke-width':w,'stroke-linecap':'round',cursor:'pointer'},layer);
+   svg('title',{},path).textContent=n.name+': '+(obs?fmt(obs.cfs)+' cfs observed':'no verified current discharge');path.addEventListener('click',()=>{if(!dragged)show(id)});
+ }
+ for(let [id,p] of Object.entries(positions)){
+   if(!nodes[id])continue;let [x,y]=project(p),n=nodes[id],g=svg('g',{class:'station',tabindex:'0',role:'button','aria-label':'Select '+n.name},layer);
+   svg('circle',{cx:x,cy:y,r:id===selected?7:4,fill:id===selected?'#f0a63d':n.kind==='mainstem'?'#155d7a':n.kind==='inflow'?'#3a9674':'#b27945'},g);
+   svg('title',{},g).textContent=n.name;g.addEventListener('click',()=>{if(!dragged)show(id)});g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();show(id)}});
+ }
+ // Labels in dedicated side rails, sorted by latitude; a minimum spacing
+ // prevents label-label collisions and leaders keep them clear of colored reaches.
+ function rail(ids,x,side){let entries=ids.filter(id=>positions[id]&&nodes[id]).map(id=>({id,y:project(positions[id])[1]})).sort((a,b)=>a.y-b.y);
+   let prev=12;for(let e of entries){e.ly=Math.max(e.y,prev+13);prev=e.ly;}let overflow=entries.length?entries[entries.length-1].ly-885:0;
+   if(overflow>0)for(let e of entries)e.ly-=overflow;
+   for(let e of entries){let p=project(positions[e.id]),anchor=side==='left'?'start':'end';let end=side==='left'?x+145:x-145;
+     svg('path',{d:`M${p[0]},${p[1]} L${end},${e.ly}`,stroke:'#8da7b4','stroke-width':'.75',fill:'none',opacity:'.65'},labels);
+     let label=svg('text',{x,y:e.ly-2,'font-size':10,'text-anchor':anchor,fill:'#203f51','paint-order':'stroke',stroke:'#f5f9fb','stroke-width':3},labels);
+     let q=nodes[e.id].current_discharge;label.textContent=nodes[e.id].name+(q?' · '+fmt(q.cfs)+' cfs':'');
+   }
+ }
+ rail(main.filter((id,i)=>i===0||i===main.length-1||nodes[id].current_discharge),7,'left');
+ rail(Object.keys(D.parents).filter(id=>nodes[id]?.current_discharge),682,'right');
 }
+// SVG viewBox zoom/pan avoids external libraries and preserves all map click targets.
+let vb=[0,0,690,900],dragged=false,dragStart=null;const map=$('map');
+function applyView(){map.setAttribute('viewBox',vb.join(' '))}
+function zoom(factor,clientX,clientY){let r=map.getBoundingClientRect(),x=(clientX-r.left)/r.width,y=(clientY-r.top)/r.height;
+ let nw=Math.max(90,Math.min(1400,vb[2]*factor)),nh=nw*900/690;
+ vb=[vb[0]+x*(vb[2]-nw),vb[1]+y*(vb[3]-nh),nw,nh];applyView()}
+$('zoomIn').onclick=()=>{let r=map.getBoundingClientRect();zoom(.75,r.left+r.width/2,r.top+r.height/2)};
+$('zoomOut').onclick=()=>{let r=map.getBoundingClientRect();zoom(1.33,r.left+r.width/2,r.top+r.height/2)};
+$('zoomReset').onclick=()=>{vb=[0,0,690,900];applyView()};map.addEventListener('dblclick',e=>{e.preventDefault();$('zoomReset').click()});
+map.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY>0?1.15:.87,e.clientX,e.clientY)},{passive:false});
+map.addEventListener('pointerdown',e=>{if(e.button!==0)return;dragStart=[e.clientX,e.clientY,...vb];dragged=false;map.setPointerCapture(e.pointerId)});
+map.addEventListener('pointermove',e=>{if(!dragStart)return;let r=map.getBoundingClientRect(),dx=e.clientX-dragStart[0],dy=e.clientY-dragStart[1];if(Math.hypot(dx,dy)>4)dragged=true;if(dragged){vb[0]=dragStart[2]-dx/r.width*vb[2];vb[1]=dragStart[3]-dy/r.height*vb[3];applyView()}});
+map.addEventListener('pointerup',()=>{dragStart=null;setTimeout(()=>{dragged=false},0)});map.addEventListener('pointercancel',()=>{dragStart=null;dragged=false});
 $('widthQ').onclick=()=>{flowWidths=true;$('widthQ').classList.add('active');$('widthSame').classList.remove('active');renderMap()};$('widthSame').onclick=()=>{flowWidths=false;$('widthSame').classList.add('active');$('widthQ').classList.remove('active');renderMap()};
 function chart(series){
  let plot=$('plot');plot.replaceChildren();
