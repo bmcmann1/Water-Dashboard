@@ -1,0 +1,190 @@
+{
+  "status": "generalized_georeferenced_reference_points_not_official_centerlines",
+  "note": "Approximate station/confluence positions and generalized river connections for navigation only. Replace with verified NHD/USGS hydrography before labeling the map GIS-accurate. No unverified coordinates used for calculations.",
+  "positions": {
+    "cag": [
+      -90.78,
+      39.26
+    ],
+    "grafton": [
+      -90.43,
+      38.97
+    ],
+    "stlouis": [
+      -90.18,
+      38.63
+    ],
+    "chester": [
+      -89.82,
+      37.91
+    ],
+    "cape": [
+      -89.52,
+      37.31
+    ],
+    "thebes": [
+      -89.46,
+      37.22
+    ],
+    "cairo": [
+      -89.18,
+      36.99
+    ],
+    "newmadrid": [
+      -89.53,
+      36.59
+    ],
+    "memphis": [
+      -90.06,
+      35.15
+    ],
+    "helena": [
+      -90.59,
+      34.53
+    ],
+    "arkcity": [
+      -91.21,
+      33.61
+    ],
+    "greenville": [
+      -91.06,
+      33.41
+    ],
+    "vicksburg": [
+      -90.88,
+      32.35
+    ],
+    "natchez": [
+      -91.4,
+      31.56
+    ],
+    "rrl": [
+      -91.55,
+      31.0
+    ],
+    "baton": [
+      -91.18,
+      30.45
+    ],
+    "donaldsonville": [
+      -90.99,
+      30.1
+    ],
+    "neworleans": [
+      -90.12,
+      29.96
+    ],
+    "bellechasse": [
+      -89.99,
+      29.85
+    ],
+    "westpointe": [
+      -89.79,
+      29.57
+    ],
+    "illinois": [
+      -90.6,
+      39.06
+    ],
+    "missouri": [
+      -90.65,
+      38.78
+    ],
+    "meramec": [
+      -90.36,
+      38.48
+    ],
+    "kaskaskia": [
+      -89.9,
+      38.03
+    ],
+    "bigmuddy": [
+      -89.39,
+      37.71
+    ],
+    "ohio": [
+      -89.22,
+      37.03
+    ],
+    "hatchie": [
+      -89.89,
+      35.38
+    ],
+    "loosahatchie": [
+      -89.92,
+      35.24
+    ],
+    "wolf": [
+      -89.96,
+      35.14
+    ],
+    "stfrancis": [
+      -90.54,
+      35.0
+    ],
+    "white": [
+      -91.13,
+      34.02
+    ],
+    "arkansas": [
+      -91.42,
+      33.88
+    ],
+    "yazoo": [
+      -90.68,
+      32.56
+    ],
+    "bigblack": [
+      -90.72,
+      32.18
+    ],
+    "homochitto": [
+      -91.28,
+      31.64
+    ],
+    "oldriver": [
+      -91.65,
+      31.07
+    ],
+    "morganza": [
+      -91.66,
+      30.74
+    ],
+    "bayousara": [
+      -91.37,
+      30.76
+    ],
+    "lafourche": [
+      -90.87,
+      29.98
+    ],
+    "bonnet": [
+      -90.39,
+      30.06
+    ],
+    "davis": [
+      -90.29,
+      29.94
+    ],
+    "caernarvon": [
+      -89.9,
+      29.82
+    ],
+    "salt": [
+      -91.01,
+      39.34
+    ],
+    "cuivre": [
+      -90.64,
+      39.02
+    ],
+    "obion": [
+      -89.44,
+      36.06
+    ],
+    "forkeddeer": [
+      -89.65,
+      35.86
+    ]
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "documentation": "https://api.water.noaa.gov/nwps/v1/docs/",
+  "units": "NWM streamflow is typically m3/s; verify per response",
+  "mapping_policy": "Do not guess reach IDs from gauge numbers or coordinates. Approve both gauge and near-mouth reach IDs from NOAA metadata / GIS hydrography.",
+  "pairs": {
+    "illinois": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "missouri": {
+      "usgs_site": "06935965",
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "meramec": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "kaskaskia": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "bigmuddy": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "ohio": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "hatchie": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "loosahatchie": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "wolf": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "stfrancis": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "white": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "arkansas": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "yazoo": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "bigblack": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "homochitto": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "bayousara": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "salt": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "cuivre": {
+      "usgs_site": "05514500",
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "obion": {
+      "usgs_site": "07026040",
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    },
+    "forkeddeer": {
+      "usgs_site": null,
+      "gauge_reach_id": null,
+      "mouth_reach_id": null,
+      "gauge_match_verified": false,
+      "mouth_match_verified": false,
+      "mouth_distance_miles": null,
+      "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
+    }
+  }
+}
