@@ -36,10 +36,13 @@ jobs:
         run: python scripts/verify_nwm_pairing.py
       - name: Verify every station, source route and near-mouth evidence
         run: python scripts/complete_verification.py
-      - name: Discover nearby gauges and modeled or operations alternatives for unresolved gaps
-        run: python scripts/discover_fallbacks.py
       - name: Normalize and 24-hour QC
         run: python scripts/normalize_qc.py
+      - name: Discover backups only where fresh primary discharge is unavailable
+        # Catalog outages must not invalidate a healthy primary acquisition.
+        # Discovery writes a diagnostic report even when an individual catalog fails.
+        continue-on-error: true
+        run: python scripts/discover_fallbacks.py
       - name: Build embedded dashboard
         run: python scripts/build_dashboard.py
       - name: Verify acquisition and continuity diagnostics
