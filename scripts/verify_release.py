@@ -19,10 +19,18 @@ else:
  # Release-critical unresolved source/near-mouth issues are reported explicitly.
  (p/'release_blockers.json').write_text(json.dumps(report.get('blockers',[]),indent=2))
 fallback=p/'fallback_discovery.json'
-if not fallback.exists():errors.append('Missing automatic fallback discovery report')
+if not fallback.exists():
+ normalized=json.loads((p/'normalized_network.json').read_text())
+ from discover_fallbacks import has_primary_discharge
+ if any(not has_primary_discharge(nid, normalized) for nid in normalized.get('nodes',{})):
+  errors.append('Missing fallback discovery report for uncovered stations')
 else:
  fb=json.loads(fallback.read_text());needed={b['node'] for b in report.get('blockers',[]) if b.get('variable') in ('discharge','near_mouth_discharge','structure_operations')} if verification.exists() else set()
  for nid in needed:
-  if not fb.get('stations',{}).get(nid,{}).get('alternatives'):errors.append('No actionable fallback options: '+nid)
+  station=fb.get('stations',{}).get(nid,{})
+  if station.get('primary_discharge_available'):
+   continue  # Backup acquisition is optional when a valid fresh primary is present.
+  if not station.get('alternatives'):
+   errors.append('No actionable fallback options: '+nid)
 print(json.dumps({'stations_audited' :len(acq.get('usgs',{})),'attempted_routes':acq.get('request_count'),'mass_balance':mass.get('summary'),'errors':errors},indent=2))
 if errors:sys.exit(1)

@@ -26,7 +26,11 @@ def valid_time(value):
         return None
 
 
-def evaluate(network, qc, dashboard_bytes, now=None):
+def evaluate(network, qc, dashboard_bytes, now=None, *, audit_path="output/mass_balance_audit.json", acquisition_path="output/acquisition_summary.json", verification_path="output/complete_verification.json"):
+    """Validate a release. Pass audit_path=None only for isolated schema unit tests.
+
+    Production always uses the default paths; missing mandatory reports are checked in main().
+    """
     now = now or dt.datetime.now(dt.timezone.utc)
     nodes = network.get('nodes', {})
     if len(nodes) != 46 or qc.get('node_count') != 46:
@@ -49,8 +53,8 @@ def evaluate(network, qc, dashboard_bytes, now=None):
                 break
     if len(fresh) < MIN_FRESH_NOAA:
         raise ValueError(f'Only {len(fresh)} fresh NOAA observation stations; require {MIN_FRESH_NOAA}')
-    audit = pathlib.Path('output/mass_balance_audit.json')
-    if audit.exists():
+    audit = pathlib.Path(audit_path) if audit_path is not None else None
+    if audit is not None and audit.exists():
         report = json.loads(audit.read_text())
         if len(report.get('reaches', [])) != len(json.loads(pathlib.Path('network_registry.json').read_text())['reaches']):
             raise ValueError('Mass-balance audit does not cover every mainstem reach')
@@ -59,16 +63,16 @@ def evaluate(network, qc, dashboard_bytes, now=None):
         if any(r.get('status')=='continuity' and (r.get('missing') or r.get('cfs') is None) for r in report['reaches']):
             raise ValueError('Unsupported complete continuity estimate')
     # Three *attempted* routes, not three successful measurements; do not fabricate availability.
-    acq = pathlib.Path('output/acquisition_summary.json')
-    if acq.exists():
+    acq = pathlib.Path(acquisition_path) if acquisition_path is not None else None
+    if acq is not None and acq.exists():
         summary = json.loads(acq.read_text())
         for sid, result in summary.get('usgs', {}).items():
             for code in ('00060','00065','63160'):
                 routes = {r['route'] for r in result.get('routes', []) if r.get('parameter') == code}
                 if routes != {'legacy_iv','ogc_continuous','legacy_dv'}:
                     raise ValueError(f'Incomplete three-route audit: {sid} {code}: {routes}')
-    verification = pathlib.Path("output/complete_verification.json")
-    if not verification.exists():
+    verification = pathlib.Path(verification_path) if verification_path is not None else None
+    if verification is None or not verification.exists():
         return fresh  # evaluate() also supports isolated historical unit-test fixtures
     evidence = json.loads(verification.read_text())
     if evidence.get("network_nodes") != 46:
