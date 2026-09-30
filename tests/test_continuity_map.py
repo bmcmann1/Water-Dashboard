@@ -9,9 +9,9 @@ class ContinuityMapTests(unittest.TestCase):
    self.assertNotIn(j['id'],main)
   self.assertEqual(len(ids),len(r['junctions']))
  def test_no_unverified_tributary_is_assumed_zero(self):
-  src=(ROOT/'scripts/build_dashboard.py').read_text()
-  self.assertIn("missing.append(j['id'])",src)
-  self.assertIn('if known and not missing else None',src)
+  src=(ROOT/'scripts/continuity.py').read_text()
+  self.assertIn("missing.append(ident)",src)
+  self.assertIn("if valid and not missing else None",src)
  def test_map_controls_and_continuity_visuals(self):
   src=(ROOT/'scripts/dashboard_template.html').read_text()
   for item in ('zoomIn','zoomOut','zoomReset','reach_flow','junction_kinds','pointermove','wheel'):
