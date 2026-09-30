@@ -5,7 +5,7 @@
   "mapping_policy": "Do not guess reach IDs from gauge numbers or coordinates. Approve both gauge and near-mouth reach IDs from NOAA metadata / GIS hydrography.",
   "pairs": {
     "illinois": {
-      "usgs_site": null,
+      "usgs_site": "05587060",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -23,7 +23,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "meramec": {
-      "usgs_site": null,
+      "usgs_site": "07019130",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -32,7 +32,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "kaskaskia": {
-      "usgs_site": null,
+      "usgs_site": "05595000",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -41,7 +41,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "bigmuddy": {
-      "usgs_site": null,
+      "usgs_site": "05599500",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -59,7 +59,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "hatchie": {
-      "usgs_site": null,
+      "usgs_site": "07029500",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -68,7 +68,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "loosahatchie": {
-      "usgs_site": null,
+      "usgs_site": "07030357",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -77,7 +77,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "wolf": {
-      "usgs_site": null,
+      "usgs_site": "07031740",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -95,7 +95,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "white": {
-      "usgs_site": null,
+      "usgs_site": "07077830",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -104,7 +104,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "arkansas": {
-      "usgs_site": null,
+      "usgs_site": "07265280",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -113,7 +113,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "yazoo": {
-      "usgs_site": null,
+      "usgs_site": "07288800",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -122,7 +122,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "bigblack": {
-      "usgs_site": null,
+      "usgs_site": "07290000",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -131,7 +131,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "homochitto": {
-      "usgs_site": null,
+      "usgs_site": "07292500",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
@@ -140,7 +140,7 @@
       "review_notes": "Pending NWM reach crosswalk; no modeled discharge until verified."
     },
     "bayousara": {
-      "usgs_site": null,
+      "usgs_site": "07373300",
       "gauge_reach_id": null,
       "mouth_reach_id": null,
       "gauge_match_verified": false,
