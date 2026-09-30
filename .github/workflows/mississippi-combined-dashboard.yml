@@ -22,7 +22,9 @@ jobs:
           python-version: '3.12'
       - name: NOAA and HEFS
         run: python scripts/acquire_noaa.py
-      - name: USGS conditional fallback (USACE catalog refresh disabled by default)
+      - name: USGS three-route acquisition and bounded USACE discovery
+        env:
+          REFRESH_USACE_CATALOG: "1"
         run: python scripts/acquire_usgs_usace.py
       - name: Discover NOAA gauge-to-NWM candidates (audit only; no auto-approval)
         run: python scripts/discover_nwm_reaches.py --enable-gis
@@ -32,10 +34,16 @@ jobs:
         run: python scripts/acquire_usace_series.py
       - name: Verify USGS-NWM pairs and near-mouth routing evidence (no extra downloads)
         run: python scripts/verify_nwm_pairing.py
+      - name: Verify every station, source route and near-mouth evidence
+        run: python scripts/complete_verification.py
+      - name: Discover nearby gauges and modeled or operations alternatives for unresolved gaps
+        run: python scripts/discover_fallbacks.py
       - name: Normalize and 24-hour QC
         run: python scripts/normalize_qc.py
       - name: Build embedded dashboard
         run: python scripts/build_dashboard.py
+      - name: Verify acquisition and continuity diagnostics
+        run: python scripts/verify_release.py
       - name: Test outputs
         run: python -m unittest discover -s tests -v
       - name: Publication safety gate
