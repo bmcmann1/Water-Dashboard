@@ -1,4 +1,0 @@
-{
-  "notes": "Deprecated: screening uses 24-hour observation age and 24-hour neighbor timestamp gap; no lag or routing model.",
-  "reaches": []
-}
