@@ -55,22 +55,33 @@ def fetch(label,url,rel,accept='application/json'):
  LOG.append(entry);return None,entry
 
 def usgs(sid):
- out={'site':sid,'routes':[],'parameters':{}}
- # Legacy IV is the ONLY schema normalized by normalize_qc.py. Request it first.
- # Only try OGC endpoints if legacy is missing or invalid; OGC responses remain
- # discovery evidence until a verified OGC normalizer is introduced.
- for code in ['00060','00065','63160']:
-  # Only legacy IV is currently parsed by normalize_qc.py. Avoid unconsumed
-  # OGC requests and six-request retries for every site. Missing values stay missing.
-  base='https://waterservices.usgs.gov/nwis/iv/'
-  query={'format':'json','sites':sid,'parameterCd':code,'period':'P3D','siteStatus':'all'}
-  data,e=fetch('USGS '+sid+' '+code+' legacy',base+'?'+urllib.parse.urlencode(query),
-               'raw/usgs/'+sid+'/'+code+'_legacy.json')
-  count=sum(len(block.get('value',[])) for ts in data.get('value',{}).get('timeSeries',[])
-            for block in ts.get('values',[])) if isinstance(data,dict) else 0
-  out['routes'].append({'parameter':code,'route':'legacy','status':e['http_status'],
-                        'json_ok':e['json_ok'],'records':count,'error':e['error']})
+ """Attempt three independently addressable USGS retrieval routes per parameter.
 
+ IV is the canonical instantaneous record. Daily values are independent published
+ aggregates and MUST NOT be substituted for instantaneous flow. OGC responses are
+ archived for schema review; they are not silently normalized as legacy IV.
+ """
+ out={'site':sid,'routes':[],'parameters':{}}
+ for code in ('00060','00065','63160'):
+  routes=[
+   ('legacy_iv','https://waterservices.usgs.gov/nwis/iv/',{'format':'json','sites':sid,'parameterCd':code,'period':'P3D','siteStatus':'all'}),
+   ('ogc_continuous','https://api.waterdata.usgs.gov/ogcapi/v0/collections/continuous/items',{'monitoring_location_id':'USGS-'+sid,'parameter_code':code,'limit':1000}),
+   ('legacy_dv','https://waterservices.usgs.gov/nwis/dv/',{'format':'json','sites':sid,'parameterCd':code,'period':'P7D','siteStatus':'all'})]
+  for route,base,query in routes:
+   data,e=fetch('USGS '+sid+' '+code+' '+route,base+'?'+urllib.parse.urlencode(query),
+                'raw/usgs/'+sid+'/'+code+'_'+route+'.json')
+   count=(sum(len(block.get('value',[])) for ts in data.get('value',{}).get('timeSeries',[])
+           for block in ts.get('values',[])) if isinstance(data,dict) and route!='ogc_continuous'
+          else len(data.get('features',[])) if isinstance(data,dict) and route=='ogc_continuous' else 0)
+   out['routes'].append({'parameter':code,'route':route,'url':e['url'],'status':e['http_status'],
+     'json_ok':e['json_ok'],'records':count,'error':e['error'],
+     'retrieved_utc':e['retrieved_utc'],'bytes':e['bytes'],'sha256':e['sha256'],
+     'use_for_instantaneous':route=='legacy_iv' and count>0})
+   # The existing normalizer consumes the legacy filename. Avoid an extra file copy.
+   if route=='legacy_iv' and e['json_ok']:
+    original=ROOT/'raw/usgs'/sid/(code+'_legacy_iv.json')
+    original.rename(ROOT/'raw/usgs'/sid/(code+'_legacy.json'))
+    e['file']='raw/usgs/'+sid+'/'+code+'_legacy.json'
  return out
 
 def cwms_discovery():
@@ -100,7 +111,7 @@ def main():
  # The registry may include historical IDs; absence of records must remain visible.
  summaries={sid:usgs(sid) for sid in sorted(site_nodes)}
  discovery=cwms_discovery() if os.getenv("REFRESH_USACE_CATALOG", "0")=="1" else []
- summary={'generated_utc':UTC().isoformat(),'scope':str(len(nodes))+' nodes; one parseable USGS route per site-variable; optional CWMS catalog refresh','site_to_nodes':site_nodes,'usgs':summaries,'cwms_discovery':discovery,'request_count':len(LOG),'successful_json':sum(x['json_ok'] for x in LOG),'failed_requests':sum(not x['json_ok'] for x in LOG),'upstream_candidate_review':CANDIDATES,'important_limits':['CWMS catalog discovery does not establish that time series are active; review catalog identifiers and select validated flow/operations series for next run.','USGS latest route is not a three-day history; continuous and legacy are history routes.','No Q imputation, no inferred NAVD88 conversions, no unverified mass balance.']}
+ summary={'generated_utc':UTC().isoformat(),'scope':str(len(nodes))+' nodes; three logged USGS routes per site-variable; optional CWMS catalog refresh','site_to_nodes':site_nodes,'usgs':summaries,'cwms_discovery':discovery,'request_count':len(LOG),'successful_json':sum(x['json_ok'] for x in LOG),'failed_requests':sum(not x['json_ok'] for x in LOG),'upstream_candidate_review':CANDIDATES,'important_limits':['CWMS catalog discovery does not establish that time series are active; review catalog identifiers and select validated flow/operations series for next run.','Only legacy instantaneous values are normalized; OGC and daily-value responses are independently logged verification/discovery evidence, not interchangeable instantaneous observations.','No Q imputation, no inferred NAVD88 conversions, no unverified mass balance.']}
  (ROOT/'acquisition_summary.json').write_text(json.dumps(summary,indent=2))
  (ROOT/'request_audit.json').write_text(json.dumps(LOG,indent=2))
  print(json.dumps({'sites':len(site_nodes),'requests':len(LOG),'successful_json':summary['successful_json'],'failed':summary['failed_requests']},indent=2))

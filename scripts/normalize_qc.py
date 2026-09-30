@@ -28,7 +28,7 @@ def usgs_legacy(site,code):
    for v in block.get('value',[]):
     t=timeparse(v.get('dateTime'));n=valid(v.get('value'))
     if t and n is not None:out.append({'time':t.isoformat(),'value':n,'unit':units,'qualifiers':v.get('qualifiers',[]),'source':'USGS legacy IV','site':site,'parameter':code})
- return sorted(out,key=lambda x:x['time'])
+ return list({p['time']:p for p in sorted(out,key=lambda x:x['time'])}.values())
 
 def noaa_series(lid,section):
  obj=load(ROOT/'raw/nwps'/lid/'stageflow.json');data=(obj.get(section) or {}).get('data',[]) if isinstance(obj,dict) else [];out=[]
@@ -36,7 +36,7 @@ def noaa_series(lid,section):
   if not isinstance(v,dict):continue
   t=timeparse(v.get('validTime'));n=valid(v.get('primary'))
   if t and n is not None and -100<n<2000:out.append({'time':t.isoformat(),'value':n,'unit':'ft (native stage; check NOAA metadata)','source':'NOAA NWPS '+section,'site':lid})
- return sorted(out,key=lambda x:x['time'])
+ return list({p['time']:p for p in sorted(out,key=lambda x:x['time'])}.values())
 
 def cwms_series(node,variable):
  obj=load(ROOT/'raw/usace/series'/node/(variable+'.json')); mapping=load(ROOT/'raw/usace/series'/node/(variable+'.mapping.json'));out=[]
@@ -49,9 +49,10 @@ def cwms_series(node,variable):
 
 # All network entries, including those with no current telemetry, are retained.
 ref={'illinois':['05587060'],'missouri':['06935965'],'meramec':['07019130'],'kaskaskia':['05595000'],'bigmuddy':['05599500'],'hatchie':['07029500'],'loosahatchie':['07030357','07030240'],'wolf':['07031740','07031650'],'stfrancis':[],'white':['07077830'],'arkansas':['07265280'],'yazoo':['07288800'],'bigblack':['07290000'],'homochitto':['07292500'],'bayousara':['07373300'],'lafourche':['07380401'],'davis':['295501090190400'],'caernarvon':['295124089542100'],'bellechasse':['07374525'],'baton':['07374000'],'natchez':['07290880'],'vicksburg':['07289000'],'thebes':['07022000'],'stlouis':['07010000'],'grafton':['05587450'],'cuivre':['05514500'],'obion':['07026040'],'salt':[],'forkeddeer':[]}
+candidate_nodes=(load('config/tributary_candidates.json') or {}).get('nodes',{})
 rows=[];normalized={};missing=[]
 for n in NODES:
- lid=n.get('lid');node=n['id'];sites=list(dict.fromkeys(([str(n['usgs'])] if n.get('usgs') else [])+ref.get(node,[])))
+ lid=n.get('lid');node=n['id'];sites=list(dict.fromkeys(([str(n['usgs'])] if n.get('usgs') else [])+ref.get(node,[])+candidate_nodes.get(node,{}).get('usgs_sites',[])))
  obj={'id':node,'name':n['name'],'kind':n.get('kind'),'noaa_lid':lid or None,'usgs_candidates':sites,'noaa':{},'usgs':{},'usace':{},'nwm':{},'caveats':[]}
  if lid:
   for section in ('observed','forecast'):
