@@ -1,0 +1,89 @@
+name: Natchez NOAA API connectivity test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-noaa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Test three NOAA endpoints and preserve responses
+        shell: bash
+        run: |
+          mkdir -p results
+          python3 - <<'PY'
+          import datetime, hashlib, json, pathlib, socket, ssl, urllib.request, urllib.error, traceback
+          root=pathlib.Path('results')
+          base='https://api.water.noaa.gov/nwps/v1/gauges/NTZM6'
+          endpoints={'metadata':base,'stageflow':base+'/stageflow','ratings':base+'/ratings'}
+          def now(): return datetime.datetime.now(datetime.timezone.utc).isoformat()
+          report={'started_utc':now(),'station':'NTZM6','endpoints':{},'overall':'NOT_VERIFIED'}
+          try: report['dns_addresses']=sorted({v[4][0] for v in socket.getaddrinfo('api.water.noaa.gov',443,type=socket.SOCK_STREAM)})
+          except Exception as e: report['dns_error']=repr(e)
+          for label,url in endpoints.items():
+              item={'url':url,'retrieved_utc':now(),'http_status':None,'content_type':None,'bytes':0,'json_parsed':False,'error':None}
+              print(f'\n=== {label}: {url} ===',flush=True)
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'MississippiRiverHydraulicAudit/1.0 (GitHub Actions; public NOAA data)','Accept':'application/json'})
+                  try:
+                      response=urllib.request.urlopen(req,timeout=25)
+                  except urllib.error.HTTPError as err:
+                      response=err
+                  with response:
+                      item['http_status']=response.status
+                      item['content_type']=response.headers.get('Content-Type')
+                      item['retrieved_utc']=now()
+                      raw=response.read(20_000_001)
+                      item['truncated']=len(raw)>20_000_000
+                      if item['truncated']: raw=raw[:20_000_000]
+                      item['bytes']=len(raw)
+                      item['sha256']=hashlib.sha256(raw).hexdigest()
+                      (root/(label+'.response')).write_bytes(raw)
+                      try:
+                          obj=json.loads(raw)
+                          item['json_parsed']=True
+                          (root/(label+'.json')).write_text(json.dumps(obj,indent=2,ensure_ascii=False))
+                          item['root_type']=type(obj).__name__
+                          if isinstance(obj,dict):
+                              item['top_level_keys']=list(obj)[:35]
+                              # Discovery only: these are candidate fields, not validation of values.
+                              def scan(o,p='',depth=0):
+                                  out=[]
+                                  if depth>5 or len(out)>120: return out
+                                  if isinstance(o,dict):
+                                      for k,v in list(o.items())[:80]:
+                                          path=p+'.'+k if p else k
+                                          if any(t in k.lower() for t in ('observ','forecast','rating','valid','issu','stage','flow','time','unit')):
+                                              out.append({'path':path,'type':type(v).__name__,'sample':str(v)[:110] if not isinstance(v,(list,dict)) else None})
+                                          if isinstance(v,(dict,list)): out.extend(scan(v,path,depth+1)[:120])
+                                  elif isinstance(o,list):
+                                      for i,v in enumerate(o[:3]): out.extend(scan(v,f'{p}[{i}]',depth+1)[:120])
+                                  return out[:120]
+                              item['candidate_fields']=scan(obj)
+                      except Exception as e: item['json_error']=repr(e)
+                  print('HTTP:',item['http_status'],'bytes:',item['bytes'],'JSON:',item['json_parsed'],flush=True)
+              except Exception as e:
+                  item['error']=repr(e)
+                  print('REQUEST FAILED:',repr(e),flush=True)
+              report['endpoints'][label]=item
+          ok=all(v['http_status']==200 and v['json_parsed'] and not v.get('truncated') for v in report['endpoints'].values())
+          report['overall']='THREE_ENDPOINTS_HTTP_JSON_OK_SCHEMA_NOT_YET_CERTIFIED' if ok else 'CONNECTIVITY_OR_RESPONSE_FAILURE'
+          report['completed_utc']=now()
+          (root/'audit.json').write_text(json.dumps(report,indent=2))
+          summary=['# Natchez NOAA API test','',f"Result: **{report['overall']}**",'', '| Endpoint | HTTP | JSON | Bytes | Error |','|---|---:|---|---:|---|']
+          for name,v in report['endpoints'].items(): summary.append(f"| {name} | {v['http_status']} | {v['json_parsed']} | {v['bytes']} | {v['error'] or v.get('json_error') or ''} |")
+          summary+=['','Successful HTTP/JSON parsing is not certification of observed stage, official forecast, active rating or discharge. Inspect the saved raw responses and candidate_fields in audit.json before making hydraulic claims.']
+          (root/'README.md').write_text('\n'.join(summary)+'\n')
+          pathlib.Path('summary.md').write_text('\n'.join(summary)+'\n')
+          print('\n'.join(summary),flush=True)
+          PY
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload raw responses and audit log even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: natchez-noaa-raw-and-audit
+          path: results/
+          if-no-files-found: warn
+          retention-days: 14

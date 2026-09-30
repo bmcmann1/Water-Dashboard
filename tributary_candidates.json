@@ -1,0 +1,55 @@
+{
+  "status": "candidate_upstream_reference_only_not_mouth_discharge",
+  "nodes": {
+    "illinois": {
+      "usgs_sites": [
+        "05586100",
+        "05587060"
+      ],
+      "mouth_equivalence_approved": true,
+      "notes": "Verify location, intervening flows and travel time before using for mass balance."
+    },
+    "bigmuddy": {
+      "usgs_sites": [
+        "05599500"
+      ],
+      "mouth_equivalence_approved": false,
+      "notes": "Verify location, intervening flows and travel time before using for mass balance."
+    },
+    "stfrancis": {
+      "usgs_sites": [],
+      "mouth_equivalence_approved": false,
+      "notes": "Verify location, intervening flows and travel time before using for mass balance."
+    },
+    "white": {
+      "usgs_sites": [
+        "07077000",
+        "07077830"
+      ],
+      "mouth_equivalence_approved": false,
+      "notes": "Verify location, intervening flows and travel time before using for mass balance."
+    },
+    "arkansas": {
+      "usgs_sites": [
+        "07265280"
+      ],
+      "mouth_equivalence_approved": false,
+      "notes": "Verify location, intervening flows and travel time before using for mass balance."
+    },
+    "ohio": {
+      "usgs_sites": [
+        "03612600"
+      ],
+      "mouth_equivalence_approved": true,
+      "notes": "Verify location, intervening flows and travel time before using for mass balance."
+    },
+    "meramec": {
+      "usgs_sites": [
+        "07019000",
+        "07019300"
+      ],
+      "mouth_equivalence_approved": false,
+      "notes": ""
+    }
+  }
+}

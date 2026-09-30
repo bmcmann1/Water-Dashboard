@@ -1,0 +1,85 @@
+name: Mississippi Combined Dashboard — Manual First
+on:
+  workflow_dispatch:
+  # After the first end-to-end run has been reviewed, uncomment these two lines:
+  # schedule:
+  #   - cron: '0 14 * * 1'  # Monday 8am CST / 9am CDT
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: mississippi-combined-pages
+  cancel-in-progress: false
+jobs:
+  acquire-qc-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: NOAA and HEFS
+        run: python scripts/acquire_noaa.py
+      - name: USGS three-route acquisition and bounded USACE discovery
+        env:
+          REFRESH_USACE_CATALOG: "1"
+        run: python scripts/acquire_usgs_usace.py
+      - name: Acquire priority tributary NOAA stage checkpoints (audited)
+        run: python scripts/acquire_priority_tributaries.py
+      - name: Archive USACE Mills Dam release observations (verification required)
+        run: python scripts/acquire_mills_dam.py
+      - name: Discover NOAA gauge-to-NWM candidates (audit only; no auto-approval)
+        run: python scripts/discover_nwm_reaches.py --enable-gis
+      - name: Approved NOAA NWM reaches (bounded, deduplicated; safe no-op if unverified)
+        run: python scripts/acquire_nwm.py
+      - name: Approved USACE time series (structure operations excluded)
+        run: python scripts/acquire_usace_series.py
+      - name: Verify USGS-NWM pairs and near-mouth routing evidence (no extra downloads)
+        run: python scripts/verify_nwm_pairing.py
+      - name: Verify every station, source route and near-mouth evidence
+        run: python scripts/complete_verification.py
+      - name: Normalize primary observations and 24-hour QC
+        run: python scripts/normalize_qc.py
+      - name: Discover alternatives only for unresolved gaps
+        run: python scripts/discover_fallbacks.py
+      - name: Acquire and validate hydrologically matched fallback gauges
+        run: python scripts/acquire_validated_fallbacks.py
+      - name: Reconcile priority tributary mouth flows
+        run: python scripts/reconcile_priority_tributaries.py
+      - name: Build embedded dashboard (pre-test)
+        run: python scripts/build_dashboard.py
+      - name: Verify acquisition and continuity diagnostics
+        run: python scripts/verify_release.py
+      - name: Run tests and write plain-language test report
+        run: python scripts/run_tests_report.py
+      - name: Rebuild dashboard with embedded test results
+        run: python scripts/build_dashboard.py
+      - name: Publication safety gate
+        run: python scripts/publication_gate.py
+      - name: Upload complete acquisition and QC even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mississippi-combined-audit-${{ github.run_number }}
+          path: |
+            output/
+            site/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Upload dashboard for deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: acquire-qc-build
+    runs-on: ubuntu-24.04
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

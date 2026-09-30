@@ -1,0 +1,44 @@
+name: Mississippi Full Network Acquisition and QC
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-acquisition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: NOAA observations, forecasts, ratings and HEFS
+        run: python scripts/acquire_noaa.py
+      - name: USGS observations and USACE catalog discovery
+        run: python scripts/acquire_usgs_usace.py
+      - name: Acquire priority tributary checkpoints and NWM guidance
+        run: python scripts/acquire_priority_tributaries.py
+      - name: Acquire Wilbur D. Mills total release
+        run: python scripts/acquire_mills_dam.py
+      - name: Exact approved USACE series and structure operations
+        run: python scripts/acquire_usace_series.py
+      - name: Normalize, cross-check, coverage and hydraulic QC
+        run: python scripts/normalize_qc.py
+      - name: Reconcile priority tributary mouth flows
+        run: python scripts/reconcile_priority_tributaries.py
+      - name: Build fully embedded offline dashboard (pre-test)
+        run: python scripts/build_dashboard.py
+      - name: Run tests and write plain-language test report
+        run: python scripts/run_tests_report.py
+      - name: Rebuild dashboard with embedded test results
+        run: python scripts/build_dashboard.py
+      - name: Archive complete raw and normalized results even if a step fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mississippi-full-network-${{ github.run_number }}
+          path: |
+            output/
+            site/
+          retention-days: 30
+          if-no-files-found: warn

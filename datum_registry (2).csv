@@ -1,0 +1,43 @@
+node_id,name,kind,NOAA_ID,class,NOAA_NAVD88_zero_ft,native_zero_ft,native_datum,USACE_NAVD88_adjustment_ft,provisional_NAVD88_min_ft,provisional_NAVD88_max_ft,tributary_station,tributary_gauge_zero_ft,status
+cag,Cap au Gris,mainstem,CAGM7,A,406.48,,,,,,,,NOAA metadata verified for NOAA stage only
+grafton,Grafton,mainstem,GRFI2,A,403.32,,,,,,,,NOAA metadata verified for NOAA stage only
+stlouis,St. Louis,mainstem,EADM7,A,379.58,,,,,,,,NOAA metadata verified for NOAA stage only
+chester,Chester,mainstem,CHSI2,A,340.73,,,,,,,,NOAA metadata verified for NOAA stage only
+cape,Cape Girardeau,mainstem,CPGM7,D,,304.65,NGVD29,,,,,,published native zero; no local NAVD88 transform
+thebes,Thebes,mainstem,THBI2,A,299.7,,,,,,,,NOAA metadata verified for NOAA stage only
+cairo,Cairo / Ohio confluence,mainstem,CIRI2,A,270.03,,,,,,,,NOAA metadata verified for NOAA stage only
+newmadrid,New Madrid,mainstem,NMDM7,A,255.48,,,,,,,,NOAA metadata verified for NOAA stage only
+memphis,Memphis,mainstem,MEMT1,C,184.035,,,,,,,,user-authorized provisional average of same-datum 184.03/184.04; NOAA native zero remains 184.04
+helena,Helena,mainstem,HEEA4,D,,141.7,NGVD29,,,,,,published native zero; no local NAVD88 transform
+arkcity,Arkansas City,mainstem,ARSA4,D,,96.66,NGVD29,,,,,,published native zero research lead; NAVD88 transformation unresolved
+greenville,Greenville,mainstem,GEEM6,D,,74.92,NGVD29,,,,,,published native zero research lead; NAVD88 transformation unresolved
+vicksburg,Vicksburg,mainstem,VCKM6,D,,46.23,NGVD29,,,,,,published native zero research lead; NAVD88 transformation unresolved
+natchez,Natchez,mainstem,NTZM6,C,,17.28,NGVD29,,16.58,16.98,,,"illustrative regional approximation supplied in discussion, NOT locally verified"
+rrl,Red River Landing,mainstem,RRLL1,B,,,,-0.27,,,,,USACE stage-specific NAVD88 adjustment research record; verify sensor before applying to NOAA series
+baton,Baton Rouge,mainstem,BTRL1,B,,,,-0.71,,,,,USACE stage-specific NAVD88 adjustment research record; verify sensor before applying to NOAA series
+donaldsonville,Donaldsonville,mainstem,DONL1,B,,,,-0.74,,,,,USACE stage-specific NAVD88 adjustment research record; verify sensor before applying to NOAA series
+neworleans,Carrollton / New Orleans,mainstem,NORL1,B,,,,-0.96,,,,,USACE stage-specific NAVD88 adjustment research record; verify sensor before applying to NOAA series
+bellechasse,Belle Chasse,mainstem,,D,,,,,,,,,USGS site altitude -6.58 ft NAVD88 is NOT gauge zero; prefer direct 63160 WSE
+westpointe,West Pointe à la Hache,mainstem,,B,,,,0.11,,,,,USACE stage-specific NAVD88 adjustment research record; verify sensor before applying to NOAA series
+illinois,Illinois River,junction (in),,D,,,,,,,HARI2,400,unresolved
+missouri,Missouri River,junction (in),SCLM7,A,413.472,,,,,,SCLM7,413.472,NOAA metadata verified for NOAA stage only
+meramec,Meramec River,junction (in),,D,,,,,,,VLLM7,392.92,unresolved
+kaskaskia,Kaskaskia River,junction (in),,D,,,,,,,FYEI2,300,unresolved
+bigmuddy,Big Muddy River,junction (in),,D,,,,,,,05599500,335.5,unresolved
+ohio,Ohio River,junction (in),CIRI2,A,270.03,,,,,,CIRI2,270.03,NOAA metadata verified for NOAA stage only
+hatchie,Hatchie River,junction (in),,D,,,,,,,HA116,239.81,unresolved
+loosahatchie,Loosahatchie River,junction (in),,D,,,,,,,07030357,,unresolved
+wolf,Wolf River,junction (in),,D,,,,,,,07031740,,unresolved
+stfrancis,St. Francis River,junction (in),,D,,,,,,,SF133,166.04,unresolved
+white,White River,junction (in),,D,,,,,,,WR118,129.95,unresolved
+arkansas,Arkansas River,junction (in),,D,,,,,,,07265280,135.73,unresolved
+yazoo,Yazoo River,junction (in),,D,,,,,,,07288800,,unresolved
+bigblack,Big Black River,junction (in),,D,,,,,,,07290000,84.93,unresolved
+homochitto,Homochitto River,junction (in),,D,,,,,,,07292500,,unresolved
+oldriver,Old River Control / Atchafalaya,junction (out),,D,,,,,,,,,unresolved
+morganza,Morganza Spillway,junction (out),,D,,,,,,,,,unresolved
+bayousara,Bayou Sara / Thompson Creek,junction (in),,D,,,,,,,07373300,,unresolved
+lafourche,Bayou Lafourche,junction (out),,D,,,,,,,,,unresolved
+bonnet,Bonnet Carré Spillway,junction (out),,D,,,,,,,,,unresolved
+davis,Davis Pond,junction (out),,D,,,,,,,,,unresolved
+caernarvon,Caernarvon,junction (out),,D,,,,,,,,,unresolved

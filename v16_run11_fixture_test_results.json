@@ -1,0 +1,429 @@
+{
+  "generated_utc": "2026-09-30T13:19:41.991278+00:00",
+  "total": 60,
+  "passed": 60,
+  "failed": 0,
+  "skipped": 0,
+  "tests": [
+    {
+      "id": "test_24h_qc.Test24hQC.test_normalizer_thresholds",
+      "plain_language": "Confirms the normalizer uses the agreed 24-hour freshness and time-alignment thresholds.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_24h_qc.Test24hQC.test_output_thresholds_if_present",
+      "plain_language": "Checks generated QC output preserves those 24-hour thresholds.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0002
+    },
+    {
+      "id": "test_complete_verification.VerificationTests.test_daily_not_instantaneous",
+      "plain_language": "Prevents daily-average USGS values from being treated as instantaneous discharge.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_complete_verification.VerificationTests.test_missing_timezone_rejected",
+      "plain_language": "Rejects timestamps that do not identify a timezone.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_complete_verification.VerificationTests.test_ogc_explicit_parameter",
+      "plain_language": "Requires the USGS OGC response to identify the requested parameter.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0004
+    },
+    {
+      "id": "test_complete_verification.VerificationTests.test_ogc_unknown_schema_not_verified",
+      "plain_language": "Does not certify an unfamiliar USGS OGC schema as valid data.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_complete_verification.VerificationTests.test_sentinel_rejected",
+      "plain_language": "Rejects missing-value sentinel numbers such as -9999.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_complete_verification.VerificationTests.test_zero_is_valid",
+      "plain_language": "Keeps a real zero flow/measurement as valid instead of treating it as missing.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_continuity_engine.ContinuityTests.test_no_duplicate_upstream",
+      "plain_language": "Prevents continuity from counting the upstream mainstem flow twice.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_continuity_engine.ContinuityTests.test_stale_rejected",
+      "plain_language": "Prevents stale values from entering the continuity solution.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_continuity_engine.ContinuityTests.test_unapproved_candidate_is_not_added",
+      "plain_language": "Prevents an unverified tributary fallback gauge from being added to mainstem flow.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_continuity_engine.ContinuityTests.test_verified_inflow_and_residual",
+      "plain_language": "Checks an approved tributary is added correctly and the observed residual is calculated.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0009
+    },
+    {
+      "id": "test_continuity_map.ContinuityMapTests.test_all_junctions_have_parent_and_direction",
+      "plain_language": "Checks every tributary/diversion has a parent mainstem location and in/out direction.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0003
+    },
+    {
+      "id": "test_continuity_map.ContinuityMapTests.test_map_controls_and_continuity_visuals",
+      "plain_language": "Checks map zoom/pan controls and observed/estimated flow styling are present.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_continuity_map.ContinuityMapTests.test_no_unverified_tributary_is_assumed_zero",
+      "plain_language": "Confirms missing tributaries remain unknown rather than silently becoming zero.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_fallback_acquisition_v13.FallbackV13.test_fresh_primary_skips_network",
+      "plain_language": "Avoids unnecessary fallback network calls when fresh primary data already exist.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0021
+    },
+    {
+      "id": "test_fallback_acquisition_v13.FallbackV13.test_morganza_below_threshold_conditional",
+      "plain_language": "Checks Morganza closure inference is only conditional and threshold-based.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_fallback_acquisition_v13.FallbackV13.test_old_river_not_assumed_closed",
+      "plain_language": "Prevents Old River from ever being assumed closed simply because operations data are missing.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_fallback_acquisition_v13.FallbackV13.test_river_identity_rejects_nearby_wrong_river",
+      "plain_language": "Rejects a geographically nearby gauge when it is on the wrong river.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_fallback_discovery.TestFallback.test_actionable_when_catalog_fails",
+      "plain_language": "Produces an actionable fallback record even if station catalog discovery fails.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0015
+    },
+    {
+      "id": "test_fallback_discovery.TestFallback.test_candidate_not_approved",
+      "plain_language": "Ensures a discovered fallback candidate is not automatically approved.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0002
+    },
+    {
+      "id": "test_fallback_discovery.TestFallback.test_distance",
+      "plain_language": "Checks fallback candidate distance calculations.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_fallback_discovery.TestFallback.test_rdb",
+      "plain_language": "Checks parsing of USGS site-catalog RDB text.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_geographic_dashboard.GeographicTests.test_baselines_do_not_invent_averages",
+      "plain_language": "Prevents the dashboard from inventing long-term average flows.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_geographic_dashboard.GeographicTests.test_geography_all_46_nodes",
+      "plain_language": "Confirms all 46 configured network nodes have map positions.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0002
+    },
+    {
+      "id": "test_geographic_dashboard.GeographicTests.test_self_contained_dashboard",
+      "plain_language": "Confirms the built dashboard is a self-contained HTML file.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0823
+    },
+    {
+      "id": "test_nwm_crosswalk.TestCrosswalk.test_approximate_mouth_never_approves",
+      "plain_language": "Prevents approximate map coordinates from approving an NWM mouth reach.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0017
+    },
+    {
+      "id": "test_nwm_crosswalk.TestCrosswalk.test_existing_usgs_coordinates_reused",
+      "plain_language": "Reuses already downloaded USGS coordinates instead of making redundant requests.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0003
+    },
+    {
+      "id": "test_nwm_crosswalk.TestCrosswalk.test_no_network_when_gis_disabled",
+      "plain_language": "Confirms NWM GIS discovery makes no network request when explicitly disabled.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0004
+    },
+    {
+      "id": "test_nwm_integration.NWMGuardrails.test_all_inflows_have_crosswalk_entries",
+      "plain_language": "Confirms every configured inflow has an NWM crosswalk record.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0002
+    },
+    {
+      "id": "test_nwm_integration.NWMGuardrails.test_no_false_observation_claim",
+      "plain_language": "Prevents NWM modeled values from being labeled as observations.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_nwm_integration.NWMGuardrails.test_twenty_tributaries",
+      "plain_language": "Checks the NWM tributary inventory includes all 20 configured tributaries.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_nwm_integration.NWMGuardrails.test_unverified_mapping_has_no_reach_id",
+      "plain_language": "Prevents unverified NWM reach IDs from being published as approved mappings.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_nwm_pairing_verification.VerificationTests.test_align_and_units",
+      "plain_language": "Checks modeled/observed time alignment and discharge unit conversion.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0004
+    },
+    {
+      "id": "test_nwm_pairing_verification.VerificationTests.test_bad_units_and_out_of_window",
+      "plain_language": "Rejects unsupported flow units and timestamps outside the matching window.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_nwm_pairing_verification.VerificationTests.test_unverified_never_publishes",
+      "plain_language": "Prevents an unverified NWM pairing from being published as usable.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0006
+    },
+    {
+      "id": "test_outputs.TestOutputs.test_dashboard_if_present",
+      "plain_language": "Checks key dashboard safety language when a dashboard has been built.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0056
+    },
+    {
+      "id": "test_outputs.TestOutputs.test_exact_usace_not_fabricated",
+      "plain_language": "Confirms exact USACE series identifiers are configured rather than invented at runtime.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_outputs.TestOutputs.test_normalized_if_present",
+      "plain_language": "Checks normalized output contains the full network when acquisition has run.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0507
+    },
+    {
+      "id": "test_outputs.TestOutputs.test_registry_46",
+      "plain_language": "Confirms the network registry contains the expected 46 nodes.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0002
+    },
+    {
+      "id": "test_patch.PatchTests.test_forecast_has_separate_issue_and_horizon",
+      "plain_language": "Keeps forecast issue time separate from forecast valid-time horizon.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0042
+    },
+    {
+      "id": "test_patch.PatchTests.test_mappings_are_catalog_exact",
+      "plain_language": "Checks configured USACE mappings came from exact catalog matches.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0003
+    },
+    {
+      "id": "test_patch.PatchTests.test_retry_is_present",
+      "plain_language": "Confirms transient web failures have bounded retry logic.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0021
+    },
+    {
+      "id": "test_publication_gate.PublicationGateTests.test_actual_normalized_noaa_schema_passes",
+      "plain_language": "Checks a valid normalized NOAA fixture passes the publication gate.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0002
+    },
+    {
+      "id": "test_publication_gate.PublicationGateTests.test_bad_dashboard_blocks_deploy",
+      "plain_language": "Blocks publication when the dashboard fails required safety/coverage checks.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0004
+    },
+    {
+      "id": "test_publication_gate.PublicationGateTests.test_forecast_cannot_satisfy_observation_gate",
+      "plain_language": "Prevents forecast data from satisfying an observed-data requirement.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0003
+    },
+    {
+      "id": "test_publication_gate.PublicationGateTests.test_missing_nodes_blocks_deploy",
+      "plain_language": "Blocks publication if required network nodes are missing.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_publication_gate.PublicationGateTests.test_stale_observations_do_not_pass",
+      "plain_language": "Prevents stale observations from satisfying the publication gate.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_v14_map_regressions.MapRegressionTests.test_coverage_provenance_collapsible",
+      "plain_language": "Checks Coverage and provenance is a collapsible dashboard section.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0002
+    },
+    {
+      "id": "test_v14_map_regressions.MapRegressionTests.test_map_clicks_not_captured_by_pan",
+      "plain_language": "Checks station clicks are not swallowed by SVG pan pointer capture.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_v14_map_regressions.MapRegressionTests.test_partial_keeps_accounted_flow_without_claiming_complete",
+      "plain_language": "Allows known partial flow to be drawn without labeling it a complete estimate.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_v16_reconciliation.V16ReconciliationTests.test_meramec_model_fallback_is_labeled",
+      "plain_language": "Checks modeled St. Louis-to-Herculaneum residual fallback is explicitly labeled modeled.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_v16_reconciliation.V16ReconciliationTests.test_meramec_prefers_eureka_observation",
+      "plain_language": "Checks Meramec reconciliation keeps Eureka observed flow primary and uses lower-river evidence as a check.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_v16_reconciliation.V16ReconciliationTests.test_mills_release_parser",
+      "plain_language": "Checks Wilbur D. Mills rows preserve total release and timestamp semantics.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0008
+    },
+    {
+      "id": "test_v16_reconciliation.V16ReconciliationTests.test_stage_never_becomes_discharge",
+      "plain_language": "Confirms lower-river stage checkpoints never get converted into discharge.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_v16_reconciliation.V16ReconciliationTests.test_stfrancis_negative_residual_not_flow",
+      "plain_language": "Prevents a negative mainstem residual from becoming a negative tributary discharge.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_v16_reconciliation.V16ReconciliationTests.test_stfrancis_positive_residual",
+      "plain_language": "Checks a positive Helena-to-Mhoon mainstem difference becomes a clearly labeled St. Francis-area residual.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0
+    },
+    {
+      "id": "test_v16_reconciliation.V16ReconciliationTests.test_white_uses_clarendon_anchor",
+      "plain_language": "Checks White River reconciliation uses measured Clarendon flow as its quantitative anchor when fresh.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_v9_release.TestV9.test_unverified_lateral_never_added",
+      "plain_language": "Reconfirms unverified lateral flow is never added by the continuity engine.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    },
+    {
+      "id": "test_v9_release.TestV9.test_zero_valid_lateral",
+      "plain_language": "Confirms a verified zero lateral flow remains a valid hydraulic term.",
+      "status": "PASS",
+      "detail": "",
+      "seconds": 0.0001
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "version": 16,
+  "note": "Operational tributary strategy. Freshness, source identity, flow-path and hydraulic checks must pass before continuity use. Stage is diagnostic only and is never converted to discharge.",
+  "rivers": {
+    "ohio": {
+      "strategy": "direct_near_mouth",
+      "primary": "USGS 03612600 Olmsted",
+      "usgs_flow": ["03612600"],
+      "noaa_stage": ["CIRI2"],
+      "approved_transfer": true,
+      "distance_miles_approx": 15.5,
+      "notes": "Olmsted is the representative Ohio inflow when fresh and unit-verified; lower Ohio/Cairo stage remains a backwater check."
+    },
+    "arkansas": {
+      "strategy": "controlled_release",
+      "primary": "USACE Wilbur D. Mills Dam total release",
+      "usgs_stage": ["07265280"],
+      "usace_url": "https://www.swl-wc.usace.army.mil/pages/data/tabular/htm/d02.htm",
+      "approved_transfer": true,
+      "notes": "Use parsed turbine+spillway total release at the downstream-most control structure. Lower-channel travel/storage caveat remains explicit."
+    },
+    "illinois": {
+      "strategy": "upstream_transfer_screened",
+      "primary": "USGS 05586100 Valley City",
+      "usgs_flow": ["05586100"],
+      "approved_transfer": true,
+      "distance_miles_approx": 61.3,
+      "notes": "Valley City is accepted as representative for screening-level Mississippi inflow; modest intervening drainage and timing caveats remain."
+    },
+    "white": {
+      "strategy": "multistation_hydraulic_reconciliation",
+      "primary": "USACE Clarendon flow (NPTA4), with USGS DeValls Bluff context",
+      "usgs_flow": ["07077000"],
+      "noaa_stage": ["NOGA4", "SCHA4"],
+      "approved_transfer": true,
+      "notes": "Clarendon measured flow is the quantitative anchor. Norrell and St. Charles stage trends and NWM checkpoint flow are reconciliation/backwater diagnostics; stage is never converted to Q."
+    },
+    "stfrancis": {
+      "strategy": "mainstem_residual_reconciliation",
+      "primary": "Mississippi mainstem residual between Helena HEEA4 and Tunica Mhoon Landing MHOM6",
+      "noaa_stage": ["HEEA4", "MHOM6"],
+      "approved_transfer": true,
+      "notes": "Prefer observed bounding flow when NOAA payload units prove it is discharge; otherwise use same-model NWM analysis at both checkpoints. Report as St. Francis-area net lateral residual, not an isolated measured tributary hydrograph."
+    },
+    "meramec": {
+      "strategy": "eureka_plus_mainstem_reconciliation",
+      "primary": "USGS 07019000 Eureka",
+      "usgs_flow": ["07019000"],
+      "usgs_stage": ["07019300"],
+      "noaa_stage": ["ARNM7", "EADM7", "HRCM7"],
+      "approved_transfer": true,
+      "notes": "Eureka observed discharge remains primary. Arnold and Herculaneum stage trends screen for lower-river/backwater changes. Same-model NWM St. Louis-to-Herculaneum residual provides a quantitative cross-check and fallback when Eureka is unavailable."
+    }
+  },
+  "small_tributary_policy": {
+    "mode": "grouped_mainstem_residual",
+    "notes": "Tributaries below the priority set may be grouped within bounding Mississippi reaches. A group residual represents unresolved net lateral contribution and must not be assigned to individual small tributaries without independent evidence."
+  }
+}
