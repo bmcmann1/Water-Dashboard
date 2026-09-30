@@ -48,6 +48,13 @@ def evaluate(network, qc, dashboard_bytes, now=None):
                 break
     if len(fresh) < MIN_FRESH_NOAA:
         raise ValueError(f'Only {len(fresh)} fresh NOAA observation stations; require {MIN_FRESH_NOAA}')
+    audit = pathlib.Path('output/mass_balance_audit.json')
+    if audit.exists():
+        report = json.loads(audit.read_text())
+        if len(report.get('reaches', [])) != len(json.loads(pathlib.Path('network_registry.json').read_text())['reaches']):
+            raise ValueError('Mass-balance audit does not cover every mainstem reach')
+        if any(r.get('status')=='continuity' and (r.get('missing') or r.get('cfs') is None) for r in report['reaches']):
+            raise ValueError('Unsupported complete continuity estimate')
     return fresh
 
 

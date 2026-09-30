@@ -3,6 +3,7 @@
 import csv,datetime as dt,hashlib,json,pathlib,re,time,os,urllib.parse,urllib.request,urllib.error
 ROOT=pathlib.Path('output');ROOT.mkdir(exist_ok=True)
 REG=json.loads(pathlib.Path('network_registry.json').read_text())
+CANDIDATES=json.loads(pathlib.Path('config/tributary_candidates.json').read_text())['nodes']
 UTC=lambda:dt.datetime.now(dt.timezone.utc)
 LOG=[];LIMIT=12_000_000
 HEAD={'User-Agent':'Mississippi-Hydraulic-Network/2.0 (GitHub Actions; research)','Accept':'application/json'}
@@ -95,10 +96,11 @@ def main():
   sid=n.get('usgs');
   if sid:site_nodes.setdefault(str(sid),[]).append(n['id'])
   for sid in REFERENCES.get(n['id'],[]):site_nodes.setdefault(sid,[]).append(n['id'])
+  for sid in CANDIDATES.get(n['id'],{}).get('usgs_sites',[]):site_nodes.setdefault(sid,[]).append(n['id'])
  # The registry may include historical IDs; absence of records must remain visible.
  summaries={sid:usgs(sid) for sid in sorted(site_nodes)}
  discovery=cwms_discovery() if os.getenv("REFRESH_USACE_CATALOG", "0")=="1" else []
- summary={'generated_utc':UTC().isoformat(),'scope':str(len(nodes))+' nodes; one parseable USGS route per site-variable; optional CWMS catalog refresh','site_to_nodes':site_nodes,'usgs':summaries,'cwms_discovery':discovery,'request_count':len(LOG),'successful_json':sum(x['json_ok'] for x in LOG),'failed_requests':sum(not x['json_ok'] for x in LOG),'important_limits':['CWMS catalog discovery does not establish that time series are active; review catalog identifiers and select validated flow/operations series for next run.','USGS latest route is not a three-day history; continuous and legacy are history routes.','No Q imputation, no inferred NAVD88 conversions, no unverified mass balance.']}
+ summary={'generated_utc':UTC().isoformat(),'scope':str(len(nodes))+' nodes; one parseable USGS route per site-variable; optional CWMS catalog refresh','site_to_nodes':site_nodes,'usgs':summaries,'cwms_discovery':discovery,'request_count':len(LOG),'successful_json':sum(x['json_ok'] for x in LOG),'failed_requests':sum(not x['json_ok'] for x in LOG),'upstream_candidate_review':CANDIDATES,'important_limits':['CWMS catalog discovery does not establish that time series are active; review catalog identifiers and select validated flow/operations series for next run.','USGS latest route is not a three-day history; continuous and legacy are history routes.','No Q imputation, no inferred NAVD88 conversions, no unverified mass balance.']}
  (ROOT/'acquisition_summary.json').write_text(json.dumps(summary,indent=2))
  (ROOT/'request_audit.json').write_text(json.dumps(LOG,indent=2))
  print(json.dumps({'sites':len(site_nodes),'requests':len(LOG),'successful_json':summary['successful_json'],'failed':summary['failed_requests']},indent=2))

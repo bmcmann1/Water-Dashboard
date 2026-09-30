@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build a single offline dashboard with generalized geographic network and provenance."""
 import json, pathlib, datetime as dt, math
+from continuity import solve
 P=pathlib.Path
 D=json.loads(P('output/normalized_network.json').read_text())
 QC=json.loads(P('output/qc_report.json').read_text())
@@ -46,34 +47,20 @@ for nid,n in compact['nodes'].items():
     # Prefer contemporaneous USGS Q; USACE is alternative. Do not sum co-located stations.
     q.sort(key=lambda x:(not x['source'].startswith('USGS'),x['time']))
     n['current_discharge']=q[0] if q else None
-# Conservative continuity: an estimate is complete only when every intervening
-# registered lateral flow is measured. Missing tributaries/diversions remain unknown.
-by_parent={}
-for j in REG['junctions']: by_parent.setdefault(j['parent'],[]).append(j)
-previous=None
-for nid in order:
-    n=compact['nodes'][nid]
-    lateral=by_parent.get(nid,[])
-    terms=[]; missing=[]; delta=0
-    for j in lateral:
-        q=compact['nodes'].get(j['id'],{}).get('current_discharge')
-        if q is None: missing.append(j['id']); continue
-        sign=1 if j['kind']=='in' else -1
-        delta+=sign*q['cfs']; terms.append({'id':j['id'],'sign':sign,'cfs':q['cfs'],'source':q['source'],'time':q['time']})
-    observed=n['current_discharge']
-    if previous is None:
-        n['reach_flow']={'status':'observed','cfs':observed['cfs'],'terms':terms,'missing':missing} if observed else {'status':'unbounded','cfs':None,'terms':terms,'missing':missing}
-    else:
-        upstream=previous.get('reach_flow',{})
-        known=upstream.get('cfs') is not None and upstream.get('status') in ('observed','continuity')
-        expected=upstream['cfs']+delta if known and not missing else None
-        if observed:
-            n['reach_flow']={'status':'observed','cfs':observed['cfs'],'terms':terms,'missing':missing,'upstream_id':previous['id'],'expected_cfs':expected,'residual_cfs':observed['cfs']-expected if expected is not None else None}
-        elif expected is not None and expected>=0:
-            n['reach_flow']={'status':'continuity','cfs':expected,'terms':terms,'missing':[],'upstream_id':previous['id']}
-        else:
-            n['reach_flow']={'status':'partial' if known else 'unbounded','cfs':None,'terms':terms,'missing':missing,'upstream_id':previous['id']}
-    previous=n
+# Only explicitly approved near-mouth equivalents may enter continuity.
+# All upstream candidate gauges remain visible even when transfer is unverified.
+config=P('config/tributary_candidates.json')
+candidates=json.loads(config.read_text())['nodes'] if config.exists() else {}
+for nid,entry in candidates.items():
+    if nid in compact['nodes']:
+        compact['nodes'][nid]['mouth_equivalence_approved']=entry.get('mouth_equivalence_approved',False)
+        compact['nodes'][nid]['upstream_reference_only']=True
+results,audit=solve(compact['nodes'],order,REG['junctions'],D['generated_utc'])
+for nid,item in results.items():compact['nodes'][nid]['reach_flow']=item
+QC['mass_balance']=audit
+P('output/mass_balance_audit.json').write_text(json.dumps({'generated_utc':D['generated_utc'],'reaches':audit},indent=2))
+P('output/qc_report.json').write_text(json.dumps(QC,indent=2))
+compact['mass_balance_summary']={'observed':sum(x['status']=='observed' for x in audit),'continuity':sum(x['status']=='continuity' for x in audit),'partial':sum(x['status']=='partial' for x in audit),'unbounded':sum(x['status']=='unbounded' for x in audit)}
 compact['map_note']='Continuity estimates assume negligible groundwater exchange and quasi-steady conditions; unmeasured lateral flows, floodplain storage and travel time are not assumed zero. Measured anchors reset the estimate; residuals are recorded when a complete comparison exists.'
 payload=json.dumps(compact,separators=(',',':')).replace('<','\\u003c').replace('>','\\u003e').replace('&','\\u0026')
 page=P('scripts/dashboard_template.html').read_text().replace('__PAYLOAD__',payload)
