@@ -28,8 +28,8 @@ def valid_time(value):
 def evaluate(network, qc, dashboard_bytes, now=None):
     now = now or dt.datetime.now(dt.timezone.utc)
     nodes = network.get('nodes', {})
-    if len(nodes) != 42 or qc.get('node_count') != 42:
-        raise ValueError(f'Expected 42 nodes; network={len(nodes)} QC={qc.get("node_count")}')
+    if len(nodes) != 46 or qc.get('node_count') != 46:
+        raise ValueError(f'Expected 46 nodes; network={len(nodes)} QC={qc.get("node_count")}')
     if dashboard_bytes < 10000:
         raise ValueError('Dashboard missing or unexpectedly small')
     fresh = []
@@ -59,7 +59,7 @@ def main():
         fresh = evaluate(json.loads(NETWORK.read_text()), json.loads(QC.read_text()), DASHBOARD.stat().st_size)
     except (ValueError, json.JSONDecodeError) as exc:
         sys.exit('Publication blocked: ' + str(exc))
-    print(f'Publication gate passed: {len(fresh)} fresh NOAA observation stations; 42 nodes; {DASHBOARD.stat().st_size:,} dashboard bytes')
+    print(f'Publication gate passed: {len(fresh)} fresh NOAA observation stations; 46 nodes; {DASHBOARD.stat().st_size:,} dashboard bytes')
 
 
 if __name__ == '__main__':

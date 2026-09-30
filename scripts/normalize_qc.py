@@ -48,11 +48,11 @@ def cwms_series(node,variable):
  return sorted(out,key=lambda x:x['time'])
 
 # All network entries, including those with no current telemetry, are retained.
-ref={'illinois':['05587060'],'missouri':['06935965'],'meramec':['07019130'],'kaskaskia':['05595000'],'bigmuddy':['05599500'],'hatchie':['07029500'],'loosahatchie':['07030357','07030240'],'wolf':['07031740','07031650'],'stfrancis':[],'white':['07077830'],'arkansas':['07265280'],'yazoo':['07288800'],'bigblack':['07290000'],'homochitto':['07292500'],'bayousara':['07373300'],'lafourche':['07380401'],'davis':['295501090190400'],'caernarvon':['295124089542100'],'bellechasse':['07374525'],'baton':['07374000'],'natchez':['07290880'],'vicksburg':['07289000'],'thebes':['07022000'],'stlouis':['07010000'],'grafton':['05587450']}
+ref={'illinois':['05587060'],'missouri':['06935965'],'meramec':['07019130'],'kaskaskia':['05595000'],'bigmuddy':['05599500'],'hatchie':['07029500'],'loosahatchie':['07030357','07030240'],'wolf':['07031740','07031650'],'stfrancis':[],'white':['07077830'],'arkansas':['07265280'],'yazoo':['07288800'],'bigblack':['07290000'],'homochitto':['07292500'],'bayousara':['07373300'],'lafourche':['07380401'],'davis':['295501090190400'],'caernarvon':['295124089542100'],'bellechasse':['07374525'],'baton':['07374000'],'natchez':['07290880'],'vicksburg':['07289000'],'thebes':['07022000'],'stlouis':['07010000'],'grafton':['05587450'],'cuivre':['05514500'],'obion':['07026040'],'salt':[],'forkeddeer':[]}
 rows=[];normalized={};missing=[]
 for n in NODES:
  lid=n.get('lid');node=n['id'];sites=list(dict.fromkeys(([str(n['usgs'])] if n.get('usgs') else [])+ref.get(node,[])))
- obj={'id':node,'name':n['name'],'kind':n.get('kind'),'noaa_lid':lid or None,'usgs_candidates':sites,'noaa':{},'usgs':{},'usace':{},'caveats':[]}
+ obj={'id':node,'name':n['name'],'kind':n.get('kind'),'noaa_lid':lid or None,'usgs_candidates':sites,'noaa':{},'usgs':{},'usace':{},'nwm':{},'caveats':[]}
  if lid:
   for section in ('observed','forecast'):
    arr=noaa_series(lid,section);obj['noaa'][section]=arr
@@ -61,6 +61,11 @@ for n in NODES:
   obj['noaa']['hefs_parameters']=[f.stem.removeprefix('quantiles_') for f in (ROOT/'raw/hefs'/lid).glob('quantiles_*.json')] if (ROOT/'raw/hefs'/lid).exists() else []
  for site in sites:
   obj['usgs'][site]={code:usgs_legacy(site,code) for code in ('00060','00065','63160')}
+ # Model output is a separate product. It must never satisfy observation freshness QC.
+ model=load(ROOT/'nwm_normalized.json') or {}
+ obj['nwm']=model.get('nodes',{}).get(node,{})
+ pairing=load(ROOT/'nwm_pairing_verification.json') or {}
+ obj['nwm_verification']=pairing.get('nodes',{}).get(node,{})
  for variable in ('discharge','stage','water_surface_elevation','gate_opening','operation'):
   arr=cwms_series(node,variable)
   if arr:obj['usace'][variable]=arr
@@ -186,6 +191,6 @@ out={'generated_utc':NOW.isoformat(),'nodes':normalized,'coverage':rows,'stage_c
 (ROOT/'normalized_network.json').write_text(json.dumps(out,separators=(',',':')))
 with (ROOT/'station_coverage.csv').open('w',newline='') as f:
  w=csv.DictWriter(f,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
-(ROOT/'qc_report.json').write_text(json.dumps({'generated_utc':NOW.isoformat(),'node_count':len(normalized),'expected_node_count':42,'nodes_without_fresh_observation':missing,'stage_crosschecks':cross,'mass_balance':balances,'plausibility_checks':plausibility,'qc_thresholds':{'observation_age_hours':24,'neighbor_timestamp_gap_hours':24},'coverage_counts':{'fresh_observation_rows':sum(r.get('fresh_24h',False) for r in rows),'total':len(rows)},'caveats':out['notes']},indent=2))
+(ROOT/'qc_report.json').write_text(json.dumps({'generated_utc':NOW.isoformat(),'node_count':len(normalized),'expected_node_count':len(NODES),'nodes_without_fresh_observation':missing,'stage_crosschecks':cross,'mass_balance':balances,'plausibility_checks':plausibility,'qc_thresholds':{'observation_age_hours':24,'neighbor_timestamp_gap_hours':24},'coverage_counts':{'fresh_observation_rows':sum(r.get('fresh_24h',False) for r in rows),'total':len(rows)},'caveats':out['notes']},indent=2))
 print('Normalized',len(normalized),'nodes; fresh source/variable rows',sum(r.get('fresh_24h',False) for r in rows),'/',len(rows),'nodes without fresh observation',len(missing))
-if len(normalized)!=42:raise SystemExit('Network coverage registry mismatch')
+if len(normalized)!=len(NODES):raise SystemExit('Network coverage registry mismatch')

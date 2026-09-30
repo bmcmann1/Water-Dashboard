@@ -1,16 +1,55 @@
 #!/usr/bin/env python3
-"""Build offline read-only inspection dashboard for reviewed GitHub Pages publication."""
-import html,json,pathlib
-P=pathlib.Path; data=json.loads(P('output/normalized_network.json').read_text());qc=json.loads(P('output/qc_report.json').read_text());site=P('site');site.mkdir(exist_ok=True)
-# Do not embed raw endpoint responses, only normalized observations and provenance/QC.
-payload=json.dumps(data,separators=(',',':')).replace('<','\\u003c').replace('>','\\u003e').replace('&','\\u0026')
-page='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mississippi Hydraulic Network — acquisition review</title><style>
-:root{font-family:system-ui,Arial;color:#172a3a;background:#f3f7f8}*{box-sizing:border-box}body{margin:0}header{background:#113e53;color:white;padding:24px}main{max-width:1450px;margin:auto;padding:20px}.layout{display:grid;grid-template-columns:minmax(250px,360px) 1fr;gap:18px}.panel{background:white;border:1px solid #dce4e8;border-radius:12px;padding:17px;min-width:0}.node{display:block;width:100%;text-align:left;padding:9px;margin:4px 0;border:1px solid #d6e2e6;border-radius:7px;background:white;cursor:pointer}.node:hover,.node[aria-current=true]{background:#dff2f0;border-color:#248779}.meta{font-size:.82em;color:#546777}.warn{background:#fff0d6;border-left:4px solid #be801f;padding:10px;margin:10px 0}.good{color:#13705c}.bad{color:#a04120}table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:8px;border-bottom:1px solid #e3e8ed;font-size:.9em}svg{width:100%;height:230px;background:#fafcfd;border:1px solid #e2e8eb}select{padding:8px;max-width:100%}@media(max-width:800px){.layout{grid-template-columns:1fr}} </style></head><body><header><h1>Mississippi River Hydraulic Network</h1><div>Frozen acquisition review • Snapshot: __DATE__ • 42 nodes • NO LIVE REFRESH</div></header><main><div class="warn">This is an acquisition/QC review, not a certified hydraulic profile. Stage datum approximations, missing telemetry, unapproved USACE series and indeterminate screening checks remain explicitly flagged.</div><div class="layout"><aside class="panel"><h2>Network locations</h2><div id="nodes"></div></aside><section class="panel"><h2 id="name">Select a station</h2><p id="subtitle"></p><div id="flags"></div><label for="series">Series</label> <select id="series"></select><svg id="plot" viewBox="0 0 760 230" role="img" aria-label="Hydrograph"><text x="20" y="35">Select a station and a data series.</text></svg><h3>Coverage and provenance</h3><div id="coverage"></div><h3>NOAA HEFS parameter availability</h3><div id="hefs"></div><h3>Contemporary hydraulic plausibility screening</h3><p id="balance"></p></section></div></main><script id="network-data" type="application/json">__PAYLOAD__</script><script>
-const D=JSON.parse(document.getElementById('network-data').textContent);const ids=Object.keys(D.nodes);const nodes=document.getElementById('nodes'),series=document.getElementById('series');
-function esc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function draw(a){const svg=document.getElementById('plot');svg.replaceChildren();const NS='http://www.w3.org/2000/svg';const text=(x,y,s)=>{let e=document.createElementNS(NS,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('font-size','13');e.textContent=s;svg.append(e)};if(!a?.length){text(18,35,'No valid normalized points for this series.');return}let points=a.filter(x=>Number.isFinite(+x.value)&&Number.isFinite(Date.parse(x.time))).sort((x,y)=>Date.parse(x.time)-Date.parse(y.time));if(!points.length){text(18,35,'No valid timestamps.');return}let xs=points.map(x=>Date.parse(x.time)),ys=points.map(x=>+x.value),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);if(xmax===xmin)xmax+=3600000;if(ymax===ymin)ymax+=1;let poly=document.createElementNS(NS,'polyline');poly.setAttribute('fill','none');poly.setAttribute('stroke','#167e91');poly.setAttribute('stroke-width','2');poly.setAttribute('points',points.map(p=>`${35+690*(Date.parse(p.time)-xmin)/(xmax-xmin)},${195-155*(p.value-ymin)/(ymax-ymin)}`).join(' '));svg.append(poly);text(12,22,`${ymin.toFixed(2)}–${ymax.toFixed(2)} ${points[0].unit??''}`);text(15,217,new Date(xmin).toISOString().slice(0,16));text(585,217,new Date(xmax).toISOString().slice(0,16))}
-function show(id){const o=D.nodes[id];document.getElementById('name').textContent=o.name;document.getElementById('subtitle').textContent=`${o.kind??'junction'} • NOAA ${o.noaa_lid??'none'} • USGS candidates ${o.usgs_candidates.join(', ')||'none'}`;document.getElementById('flags').innerHTML=o.caveats.map(x=>`<div class="warn">${esc(x)}</div>`).join('');series.replaceChildren();let options=[];for(let [k,a] of Object.entries(o.noaa)){if(Array.isArray(a))options.push(['NOAA '+k,a])}for(let [sid,ss] of Object.entries(o.usgs)){for(let [k,a] of Object.entries(ss))options.push([`USGS ${sid} ${k}`,a])}for(let [k,a] of Object.entries(o.usace))options.push(['USACE '+k,a]);options.forEach(([k,a],i)=>{let e=document.createElement('option');e.value=i;e.textContent=k+` (${a.length} points)`;series.append(e)});series.onchange=()=>draw(options[+series.value]?.[1]);draw(options[0]?.[1]);let rows=D.coverage.filter(x=>x.node===id);document.getElementById('coverage').innerHTML='<table><tr><th>Source</th><th>Variable</th><th>Points</th><th>Latest (UTC)</th><th>Status</th></tr>'+rows.map(r=>`<tr><td>${esc(r.source)} ${esc(r.station)}</td><td>${esc(r.variable)}</td><td>${r.count}</td><td>${esc(r.latest_utc??'—')}</td><td class="${r.fresh_24h?'good':'bad'}">${esc(r.status)}</td></tr>`).join('')+'</table>';document.getElementById('hefs').textContent=o.noaa.hefs_parameters?.join(', ')||'No HEFS datasets retrieved';let b=(D.plausibility_checks||[]).filter(x=>x.upstream===id||x.downstream===id);document.getElementById('balance').textContent=b.length?b.map(x=>`${x.upstream} → ${x.downstream} · ${x.variable}: ${x.status} (${x.reason})`).join('\n'):'No comparable adjacent mainstem screening for this node.';document.querySelectorAll('.node').forEach(x=>x.setAttribute('aria-current',String(x.dataset.id===id)))}
-ids.forEach(id=>{let o=D.nodes[id],e=document.createElement('button');e.className='node';e.dataset.id=id;e.innerHTML=`<strong>${esc(o.name)}</strong><div class="meta">${esc(o.kind??'junction')} · ${esc(o.noaa_lid??'no NOAA ID')}</div>`;e.onclick=()=>show(id);nodes.append(e)});show(ids[0]);</script></body></html>'''
-page=page.replace('__DATE__',html.escape(data['generated_utc'])).replace('__PAYLOAD__',payload)
-(site/'index.html').write_text(page);(site/'qc_report.json').write_text(json.dumps(qc,indent=2));(site/'normalized_network.json').write_text(json.dumps(data,separators=(',',':')))
-print('Offline inspection dashboard built:',len(data['nodes']),'nodes; bytes:',(site/'index.html').stat().st_size)
+"""Build a single offline dashboard with generalized geographic network and provenance."""
+import json, pathlib, datetime as dt, math
+P=pathlib.Path
+D=json.loads(P('output/normalized_network.json').read_text())
+QC=json.loads(P('output/qc_report.json').read_text())
+REG=json.loads(P('network_registry.json').read_text())
+GEO=json.loads(P('config/geography.json').read_text())
+BASE=json.loads(P('config/flow_baselines.json').read_text())
+site=P('site');site.mkdir(exist_ok=True)
+parents={n['id']:n.get('parent') for n in REG['junctions']}
+order=[n['id'] for n in REG['reaches']]
+# Compact the public HTML payload; full raw/normalized evidence stays in the audit artifact.
+compact={'generated_utc':D['generated_utc'],'nodes':{},'coverage':D['coverage'],'plausibility_checks':D.get('plausibility_checks',[]),'order':order,'parents':parents,'geography':GEO,'baselines':BASE['baselines']}
+for nid,o in D['nodes'].items():
+    n={k:o.get(k) for k in ('id','name','kind','noaa_lid','usgs_candidates','caveats','nwm','nwm_verification')}
+    n['series']={}
+    for label,series in [('NOAA observed stage',o.get('noaa',{}).get('observed',[])),('NOAA official stage forecast',o.get('noaa',{}).get('forecast',[]))]:
+        if series:n['series'][label]=[{'time':p['time'],'value':p['value'],'unit':p.get('unit','')} for p in series]
+    for sid,params in o.get('usgs',{}).items():
+        for code,series in params.items():
+            if series:n['series'][f'USGS {sid} '+{'00060':'Discharge','00065':'Gage height','63160':'Water-surface elevation (NAVD88)'}.get(code,code)]=[{'time':p['time'],'value':p['value'],'unit':p.get('unit','')} for p in series]
+    for var,series in o.get('usace',{}).items():
+        if series:n['series']['USACE '+var.replace('_',' ').title()]=[{'time':p['time'],'value':p['value'],'unit':p.get('unit','')} for p in series]
+    # NWM guidance is kept separate from measured USGS/USACE Q.
+    n['nwm']=o.get('nwm',{})
+    n['hefs']=o.get('noaa',{}).get('hefs_parameters',[])
+    compact['nodes'][nid]=n
+# Select only a contemporary measured discharge; never convert stage to Q or use stale observations.
+now=dt.datetime.fromisoformat(D['generated_utc'].replace('Z','+00:00'))
+for nid,n in compact['nodes'].items():
+    q=[]
+    for label,series in n['series'].items():
+        if not ('Discharge' in label or label=='USACE Discharge'):continue
+        if not series:continue
+        a=series[-1]
+        try:
+            t=dt.datetime.fromisoformat(a['time'].replace('Z','+00:00'))
+            if not (-2 <= (now-t).total_seconds()/3600 <=24):continue
+            unit=str(a.get('unit','')).lower()
+            v=float(a['value'])
+            if 'm3' in unit or 'm³' in unit or 'cms' in unit:v*=35.3146667
+            elif 'cfs' not in unit and 'ft3' not in unit and 'ft³' not in unit:continue
+            if math.isfinite(v) and v>=0:q.append({'cfs':round(v),'source':label,'time':a['time']})
+        except (ValueError,KeyError,TypeError):continue
+    # Prefer contemporaneous USGS Q; USACE is alternative. Do not sum co-located stations.
+    q.sort(key=lambda x:(not x['source'].startswith('USGS'),x['time']))
+    n['current_discharge']=q[0] if q else None
+# Flow widths are observed only at nodes with valid Q. No fabricated flow on unknown reaches.
+compact['map_note']='Generalized geographic station layout; not surveyed river centerlines. Widths represent fresh measured discharge only, not an interpolated hydraulic solution.'
+payload=json.dumps(compact,separators=(',',':')).replace('<','\\u003c').replace('>','\\u003e').replace('&','\\u0026')
+page=P('scripts/dashboard_template.html').read_text().replace('__PAYLOAD__',payload)
+(site/'index.html').write_text(page)
+# Publish only the self-contained page; archive has the full QC and normalized JSON.
+print('Built offline geographic dashboard:',len(compact['nodes']),'nodes; bytes:',(site/'index.html').stat().st_size)
