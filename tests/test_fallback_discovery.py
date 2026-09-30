@@ -2,6 +2,20 @@ import importlib.util, pathlib, unittest, tempfile, json
 spec=importlib.util.spec_from_file_location('fallback',pathlib.Path('scripts/discover_fallbacks.py'))
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 class TestFallback(unittest.TestCase):
+ def test_primary_skips_optional_catalog(self):
+  import datetime as dt
+  with tempfile.TemporaryDirectory() as d:
+   root=pathlib.Path(d)
+   root.joinpath('complete_verification.json').write_text(json.dumps({'blockers':[{'node':'ohio','variable':'discharge'}]}))
+   now=dt.datetime.now(dt.timezone.utc).isoformat()
+   root.joinpath('normalized_network.json').write_text(json.dumps({'nodes':{'ohio':{'usgs':{'01234567':{'00060':[{'time':now,'value':100,'unit':'cfs'}]}}}}}))
+   report=m.plan(root,fetch=lambda _: (_ for _ in ()).throw(AssertionError('Unnecessary HTTP call')))
+   self.assertTrue(report['stations']['ohio']['primary_discharge_available'])
+   self.assertEqual(report['catalog_attempts'],[])
+ def test_stale_primary_still_searches(self):
+  import datetime as dt
+  old=(dt.datetime.now(dt.timezone.utc)-dt.timedelta(days=3)).isoformat()
+  self.assertFalse(m.has_primary_discharge('ohio',{'nodes':{'ohio':{'usgs':{'123':{'00060':[{'time':old,'value':100,'unit':'cfs'}]}}}}}))
  def test_distance(self):
   self.assertEqual(m.distance_km((-90,30),(-90,30)),0)
   self.assertGreater(m.distance_km((-90,30),(-91,30)),90)

@@ -23,25 +23,25 @@ def fixture(observation_age=1, forecast_only=False):
 class PublicationGateTests(unittest.TestCase):
     def test_actual_normalized_noaa_schema_passes(self):
         network, qc = fixture()
-        self.assertEqual(len(gate.evaluate(network, qc, 12000, NOW)), 20)
+        self.assertEqual(len(gate.evaluate(network, qc, 12000, NOW, audit_path=None, acquisition_path=None, verification_path=None)), 20)
 
     def test_stale_observations_do_not_pass(self):
         network, qc = fixture(observation_age=25)
         with self.assertRaisesRegex(ValueError, 'Only 0 fresh'):
-            gate.evaluate(network, qc, 12000, NOW)
+            gate.evaluate(network, qc, 12000, NOW, audit_path=None, acquisition_path=None, verification_path=None)
 
     def test_forecast_cannot_satisfy_observation_gate(self):
         network, qc = fixture(forecast_only=True)
         with self.assertRaisesRegex(ValueError, 'Only 0 fresh'):
-            gate.evaluate(network, qc, 12000, NOW)
+            gate.evaluate(network, qc, 12000, NOW, audit_path=None, acquisition_path=None, verification_path=None)
 
     def test_bad_dashboard_blocks_deploy(self):
         network, qc = fixture()
         with self.assertRaisesRegex(ValueError, 'Dashboard'):
-            gate.evaluate(network, qc, 0, NOW)
+            gate.evaluate(network, qc, 0, NOW, audit_path=None, acquisition_path=None, verification_path=None)
 
     def test_missing_nodes_blocks_deploy(self):
         network, qc = fixture()
         network['nodes'].pop('0')
         with self.assertRaisesRegex(ValueError, 'Expected 46'):
-            gate.evaluate(network, qc, 12000, NOW)
+            gate.evaluate(network, qc, 12000, NOW, audit_path=None, acquisition_path=None, verification_path=None)
