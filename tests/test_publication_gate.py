@@ -12,12 +12,12 @@ NOW = dt.datetime(2026, 9, 29, 23, 40, tzinfo=dt.timezone.utc)
 def fixture(observation_age=1, forecast_only=False):
     stamp = (NOW - dt.timedelta(hours=observation_age)).isoformat()
     nodes = {}
-    for i in range(42):
+    for i in range(46):
         noaa = {'forecast': [{'time': NOW.isoformat(), 'value': 99}]}
         if not forecast_only and i < 20:
             noaa['observed'] = [{'time': stamp, 'value': 12.5}]
         nodes[str(i)] = {'noaa': noaa}
-    return {'nodes': nodes}, {'node_count': 42}
+    return {'nodes': nodes}, {'node_count': 46}
 
 
 class PublicationGateTests(unittest.TestCase):
@@ -43,5 +43,5 @@ class PublicationGateTests(unittest.TestCase):
     def test_missing_nodes_blocks_deploy(self):
         network, qc = fixture()
         network['nodes'].pop('0')
-        with self.assertRaisesRegex(ValueError, 'Expected 42'):
+        with self.assertRaisesRegex(ValueError, 'Expected 46'):
             gate.evaluate(network, qc, 12000, NOW)
